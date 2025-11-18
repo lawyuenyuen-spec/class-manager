@@ -293,7 +293,7 @@ function redeemCard(id) {
 }
 
 /* ===========================================================
-   👤 個人計分頁：渲染
+   👤 個人計分頁：渲染（已修正＋加入 編輯/刪除）
    =========================================================== */
 function renderIndividualPage() {
   const container = document.getElementById("individualList");
@@ -306,22 +306,37 @@ function renderIndividualPage() {
     card.className = "student-card";
 
     card.innerHTML = `
-  <div class="between">
-    <strong>${stu.seat}. ${stu.name}</strong>
+      <div class="between">
+        <strong>${stu.seat}. ${stu.name}</strong>
 
-   <div style="display:flex; gap:6px; align-items:center;">
-    <div class="score-num">${stu.totalScore}</div>
+        <div style="display:flex; gap:6px; align-items:center;">
+          <div class="score-num">${stu.totalScore}</div>
 
-    <button class="btn-secondary" style="padding:4px 8px;font-size:12px;"
-      onclick="editStudent(${stu.id})">
-      編輯
-    </button>
+          <button class="btn-secondary" style="padding:4px 8px;font-size:12px;"
+            onclick="editStudent(${stu.id})">
+            編輯
+          </button>
 
-    <button class="btn-danger" style="padding:4px 8px;font-size:12px;"
-      onclick="deleteStudent(${stu.id})">
-      刪除
-    </button>
-</div>
+          <button class="btn-danger" style="padding:4px 8px;font-size:12px;"
+            onclick="deleteStudent(${stu.id})">
+            刪除
+          </button>
+        </div>
+      </div>
+
+      <div class="between" style="margin-top:6px;">
+        <button class="minus-btn" onclick="changePersonalScore(${stu.id}, -1)">−</button>
+        <button class="plus-btn" onclick="changePersonalScore(${stu.id}, +1)">+</button>
+      </div>
+
+      <button class="redeem-btn" onclick="redeemCard(${stu.id})">
+        兌換一張卡（-5分）
+      </button>
+    `;
+
+    container.appendChild(card);
+  });
+}
 /* ===========================================================
    ✏️ 編輯學生（座號 + 名字）
    =========================================================== */
@@ -340,13 +355,11 @@ function editStudent(id) {
 
   saveState();
 
-  // 更新所有頁面
   renderIndividualPage();
   renderGroups();
   renderGroupRanking();
   renderDangerZone();
 }
-
   </div>
 
   <div class="between" style="margin-top:6px;">
