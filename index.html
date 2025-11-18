@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
 <head>
   <meta charset="UTF-8" />
-  <title>課室管理小幫手</title>
+  <title>課室管理小幫手 Classroom Manager v4</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <style>
@@ -157,7 +157,7 @@
       border-radius: 6px;
     }
 
-    /* Group page skeleton */
+    /********* Group page *********/
     .group-section {
       display: flex;
       gap: 20px;
@@ -175,7 +175,7 @@
       margin-bottom: 12px;
     }
 
-    /* Homework skeleton */
+    /******** Homework ********/
     .hw-card {
       padding: 12px;
       border-radius: 12px;
@@ -189,7 +189,7 @@
 <body>
 <div class="container">
 
-  <h1>課室管理小幫手</h1>
+  <h1>課室管理小幫手 Classroom Manager v4</h1>
 
   <!-- Tabs -->
   <div class="tabs">
@@ -198,10 +198,170 @@
     <button class="tab-btn" data-page="page-homework">作業訂正</button>
   </div>
 <script>
+/* ===========================================================
+   🧠  STATE：資料模型（所有資料都存放在這）
+   =========================================================== */
+let state = {
+  students: [
+    // { id, seat, name, totalScore, individualGroupScoreToday }
+  ],
 
-/* -------------------------------
-   🟦 小組：新增小組
--------------------------------- */
+  groups: [
+    // { id, name, memberIds: [], groupScore }
+  ],
+
+  homeworks: [
+    // reserved for Step 3
+  ]
+};
+
+const STORAGE_KEY = "class_manager_v4";
+
+/* ===========================================================
+   💾  LocalStorage：儲存 & 載入
+   =========================================================== */
+function loadState() {
+  const saved = localStorage.getItem(STORAGE_KEY);
+  if (saved) {
+    try {
+      state = JSON.parse(saved);
+    } catch (e) {
+      console.error("State load error:", e);
+    }
+  }
+}
+
+function saveState() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+
+/* ===========================================================
+   ➕ 新增學生
+   =========================================================== */
+function addStudent() {
+  const seat = document.getElementById("newSeat").value.trim();
+  const name = document.getElementById("newName").value.trim();
+
+  if (!seat || !name) {
+    alert("請輸入座號與姓名");
+    return;
+  }
+
+  state.students.push({
+    id: Date.now(),
+    seat,
+    name,
+    totalScore: 0,
+    individualGroupScoreToday: 0
+  });
+
+  saveState();
+  renderIndividualPage();
+  renderGroups();
+
+  document.getElementById("newSeat").value = "";
+  document.getElementById("newName").value = "";
+}
+
+/* ===========================================================
+   🧮 個人計分頁：加分 / 扣分 / 兌換卡
+   =========================================================== */
+function changePersonalScore(id, delta) {
+  const stu = state.students.find(s => s.id === id);
+  if (!stu) return;
+
+  stu.totalScore += delta;
+  if (stu.totalScore < 0) stu.totalScore = 0;
+
+  saveState();
+  renderIndividualPage();
+}
+
+function redeemCard(id) {
+  const stu = state.students.find(s => s.id === id);
+  if (!stu) return;
+
+  if (stu.totalScore < 5) {
+    alert("分數不足，不能兌換卡！");
+    return;
+  }
+
+  stu.totalScore -= 5;
+
+  saveState();
+  renderIndividualPage();
+}
+
+/* ===========================================================
+   👤 個人計分頁：渲染
+   =========================================================== */
+function renderIndividualPage() {
+  const container = document.getElementById("individualList");
+  container.innerHTML = "";
+
+  const sorted = [...state.students].sort((a, b) => Number(a.seat) - Number(b.seat));
+
+  sorted.forEach(stu => {
+    const card = document.createElement("div");
+    card.className = "student-card";
+
+    card.innerHTML = `
+      <div class="between">
+        <strong>${stu.seat}. ${stu.name}</strong>
+        <div class="score-num">${stu.totalScore}</div>
+      </div>
+
+      <div class="between" style="margin-top:6px;">
+        <button class="minus-btn" onclick="changePersonalScore(${stu.id}, -1)">−</button>
+        <button class="plus-btn" onclick="changePersonalScore(${stu.id}, +1)">+</button>
+      </div>
+
+      <button class="redeem-btn" onclick="redeemCard(${stu.id})">
+        兌換一張卡（-5分）
+      </button>
+    `;
+
+    container.appendChild(card);
+  });
+}
+
+/* ===========================================================
+   🗂️ Tabs 切換
+   =========================================================== */
+function initTabs() {
+  const tabs = document.querySelectorAll(".tab-btn");
+  const pages = document.querySelectorAll(".page");
+
+  tabs.forEach(btn => {
+    btn.addEventListener("click", () => {
+      const target = btn.dataset.page;
+
+      // Tab active 狀態
+      tabs.forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+
+      // Page active 狀態
+      pages.forEach(p => {
+        p.classList.toggle("active", p.id === target);
+      });
+    });
+  });
+}
+
+/* ===========================================================
+   🚀 INIT
+   =========================================================== */
+loadState();
+
+document.addEventListener("DOMContentLoaded", () => {
+  initTabs();
+  renderIndividualPage();
+});
+</script>
+<script>
+/* ===========================================================
+   🟦 新增小組
+   =========================================================== */
 function addGroup() {
   const id = Date.now();
   state.groups.push({
@@ -210,14 +370,15 @@ function addGroup() {
     memberIds: [],
     groupScore: 0
   });
-
   saveState();
   renderGroups();
+  renderGroupRanking();
+  renderDangerZone();
 }
 
-/* -------------------------------
-   🟦 小組：渲染整個組列表
--------------------------------- */
+/* ===========================================================
+   🟦 渲染所有小組 + 未分組學生
+   =========================================================== */
 function renderGroups() {
   const box = document.getElementById("groupList");
   const ungroupedBox = document.getElementById("ungroupedList");
@@ -225,7 +386,7 @@ function renderGroups() {
   box.innerHTML = "";
   ungroupedBox.innerHTML = "";
 
-  // 先渲染未分組學生（左側）
+  // 左邊：未分組學生
   state.students.forEach(stu => {
     const isGrouped = state.groups.some(g => g.memberIds.includes(stu.id));
     if (!isGrouped) {
@@ -234,7 +395,7 @@ function renderGroups() {
     }
   });
 
-  // 渲染各組
+  // 右邊：小組列表
   state.groups.forEach(group => {
     const card = makeGroupCard(group);
     box.appendChild(card);
@@ -243,9 +404,9 @@ function renderGroups() {
   enableDrag();
 }
 
-/* -------------------------------
-   🟦 建立「未分組」學生小卡
--------------------------------- */
+/* ===========================================================
+   🟦 未分組學生小卡
+   =========================================================== */
 function makeStudentMiniCard(stu) {
   const div = document.createElement("div");
   div.className = "student-card";
@@ -253,33 +414,31 @@ function makeStudentMiniCard(stu) {
   div.dataset.sid = stu.id;
 
   div.innerHTML = `
-    <div><strong>${stu.seat}. ${stu.name}</strong></div>
-    <div style="color:#999;font-size:13px;">未分組</div>
+    <strong>${stu.seat}. ${stu.name}</strong>
+    <div style="color:#888;font-size:13px;">未分組</div>
   `;
-
   return div;
 }
 
-/* -------------------------------
-   🟦 建立小組卡片（含組員列表）
--------------------------------- */
+/* ===========================================================
+   🟦 小組卡
+   =========================================================== */
 function makeGroupCard(group) {
   const div = document.createElement("div");
   div.className = "group-card";
   div.dataset.gid = group.id;
 
-  // 計算 groupScore = 組員個人分總和
+  // 計算組分
   group.groupScore = group.memberIds
     .map(id => state.students.find(s => s.id === id)?.individualGroupScoreToday || 0)
     .reduce((a, b) => a + b, 0);
 
-  /* 組卡 HTML */
   div.innerHTML = `
     <div class="between">
-      <input class="group-name-input" value="${group.name}"
-        onchange="renameGroup(${group.id}, this.value)"
-        style="font-size:16px;font-weight:bold;width:120px;border:none;background:#fff;">
-      <div><strong>${group.groupScore} 分</strong></div>
+      <input value="${group.name}" 
+             onchange="renameGroup(${group.id}, this.value)"
+             style="border:none;font-weight:bold;font-size:16px;">
+      <strong>${group.groupScore} 分</strong>
     </div>
 
     <div class="group-members" style="margin-top:10px;">
@@ -287,7 +446,7 @@ function makeGroupCard(group) {
     </div>
 
     <button class="btn-primary" style="margin-top:10px;"
-      onclick="settleGroup(${group.id})">
+        onclick="settleGroup(${group.id})">
       結算
     </button>
   `;
@@ -295,28 +454,26 @@ function makeGroupCard(group) {
   return div;
 }
 
-/* -------------------------------
-   🟦 渲染組員 + 每人個人 +1/-1
--------------------------------- */
+/* ===========================================================
+   🟦 組內成員 + 個人分按鈕
+   =========================================================== */
 function renderGroupMembers(group) {
   let html = "";
+  const members = group.memberIds
+    .map(id => state.students.find(s => s.id === id))
+    .sort((a, b) => Number(a.seat) - Number(b.seat));
 
-  group.memberIds.forEach(id => {
-    const stu = state.students.find(s => s.id === id);
-    if (!stu) return;
-
+  members.forEach(stu => {
     html += `
-      <div class="between" style="margin-bottom:6px;" draggable="true" data-sid="${stu.id}">
+      <div class="between" draggable="true" data-sid="${stu.id}" style="margin-bottom:6px;">
         <span>${stu.seat}. ${stu.name}</span>
-
         <span>
           <button class="minus-btn" style="width:26px;height:26px;"
             onclick="changeGroupMemberScore(${stu.id}, -1)">−</button>
           <button class="plus-btn" style="width:26px;height:26px;"
             onclick="changeGroupMemberScore(${stu.id}, +1)">+</button>
         </span>
-
-        <span style="font-weight:bold;">${stu.individualGroupScoreToday}</span>
+        <strong>${stu.individualGroupScoreToday}</strong>
       </div>
     `;
   });
@@ -324,91 +481,82 @@ function renderGroupMembers(group) {
   return html;
 }
 
-/* -------------------------------
+/* ===========================================================
    🟦 修改組名
--------------------------------- */
+   =========================================================== */
 function renameGroup(id, newName) {
   const g = state.groups.find(g => g.id === id);
   if (!g) return;
-
   g.name = newName.trim();
   saveState();
   renderGroups();
 }
 
-</script>
-<script>
-
-/* -------------------------------
-   🟧 拖曳功能（學生 → 小組）
--------------------------------- */
+/* ===========================================================
+   🟧 拖曳：啟用 Drag & Drop
+   =========================================================== */
 function enableDrag() {
   const draggables = document.querySelectorAll("[draggable='true'][data-sid]");
   const groupCards = document.querySelectorAll(".group-card");
 
   draggables.forEach(item => {
     item.addEventListener("dragstart", e => {
-      e.dataTransfer.setData("text/plain", item.dataset.sid);
+      e.dataTransfer.setData("sid", e.target.dataset.sid);
     });
   });
 
   groupCards.forEach(card => {
     card.addEventListener("dragover", e => e.preventDefault());
-
     card.addEventListener("drop", e => {
-      e.preventDefault();
-      const sid = Number(e.dataTransfer.getData("text/plain"));
+      const sid = Number(e.dataTransfer.getData("sid"));
       const gid = Number(card.dataset.gid);
       moveStudentToGroup(sid, gid);
     });
   });
 
-  // 左側「未分組」
-  const ungroup = document.getElementById("ungroupedList");
-  ungroup.addEventListener("dragover", e => e.preventDefault());
-  ungroup.addEventListener("drop", e => {
-    e.preventDefault();
-    const sid = Number(e.dataTransfer.getData("text/plain"));
+  const ungrouped = document.getElementById("ungroupedList");
+  ungrouped.addEventListener("dragover", e => e.preventDefault());
+  ungrouped.addEventListener("drop", e => {
+    const sid = Number(e.dataTransfer.getData("sid"));
     removeFromGroup(sid);
   });
 }
 
-/* -------------------------------
+/* ===========================================================
    🟧 移動學生 → 小組
--------------------------------- */
+   =========================================================== */
 function moveStudentToGroup(sid, gid) {
-  // 移除學生在所有組別
   state.groups.forEach(g => {
     g.memberIds = g.memberIds.filter(id => id !== sid);
   });
-
-  // 加入新組
   const group = state.groups.find(g => g.id === gid);
   group.memberIds.push(sid);
 
   saveState();
   renderGroups();
+  renderGroupRanking();
+  renderDangerZone();
 }
 
-/* -------------------------------
+/* ===========================================================
    🟧 移除學生 → 未分組
--------------------------------- */
+   =========================================================== */
 function removeFromGroup(sid) {
   state.groups.forEach(g => {
     g.memberIds = g.memberIds.filter(id => id !== sid);
   });
-
-  state.students.find(s => s.id === sid).individualGroupScoreToday = 0;
+  const stu = state.students.find(s => s.id === sid);
+  if (stu) stu.individualGroupScoreToday = 0;
 
   saveState();
   renderGroups();
+  renderGroupRanking();
+  renderDangerZone();
 }
-</script>
-<script>
 
-/* -------------------------------
-   🟩 個人組內 + / −（影響 individualGroupScoreToday）
--------------------------------- */
+/* ===========================================================
+   🟩 個人組內 + / −
+   =========================================================== */
 function changeGroupMemberScore(sid, delta) {
   const stu = state.students.find(s => s.id === sid);
   if (!stu) return;
@@ -418,68 +566,60 @@ function changeGroupMemberScore(sid, delta) {
 
   saveState();
   renderGroups();
-  renderDangerZone();
   renderGroupRanking();
+  renderDangerZone();
 }
 
-/* -------------------------------
-   🟩 按「結算」分配組分 → 加去 totalScore
--------------------------------- */
+/* ===========================================================
+   🟥 結算
+   =========================================================== */
 function settleGroup(gid) {
-  const group = state.groups.find(g => g.id === gid);
-  if (!group) return;
+  const g = state.groups.find(g => g.id === gid);
+  if (!g) return;
 
-  // 計算組分
-  const groupScore = group.memberIds
+  const score = g.memberIds
     .map(id => state.students.find(s => s.id === id)?.individualGroupScoreToday || 0)
     .reduce((a, b) => a + b, 0);
 
-  if (groupScore === 0) {
+  if (score === 0) {
     alert("組分為 0，不能結算");
     return;
   }
 
-  // 全組加上 groupScore
-  group.memberIds.forEach(id => {
+  g.memberIds.forEach(id => {
     const stu = state.students.find(s => s.id === id);
-    stu.totalScore += groupScore;
+    stu.totalScore += score;
     stu.individualGroupScoreToday = 0;
   });
 
-  // 組分歸零
-  group.groupScore = 0;
+  g.groupScore = 0;
 
   saveState();
   renderGroups();
   renderIndividualPage();
-  renderDangerZone();
   renderGroupRanking();
+  renderDangerZone();
 }
 
-/* -------------------------------
-   ⚠️ 危險區：individualGroupScoreToday = 0
--------------------------------- */
+/* ===========================================================
+   ⚠️ 危險區（0 分）
+   =========================================================== */
 function renderDangerZone() {
   const box = document.getElementById("dangerZone");
   box.innerHTML = "";
 
-  const zeroList = state.students.filter(s => s.individualGroupScoreToday === 0);
+  const zero = state.students.filter(s => s.individualGroupScoreToday === 0);
 
-  if (zeroList.length === 0) {
-    box.innerHTML = "<div>無學生在危險區。</div>";
-    return;
-  }
-
-  zeroList.forEach(stu => {
+  zero.forEach(stu => {
     const div = document.createElement("div");
     div.textContent = `${stu.seat}. ${stu.name}（0 分）`;
     box.appendChild(div);
   });
 }
 
-/* -------------------------------
-   🏆 分組排名（依 groupScore）
--------------------------------- */
+/* ===========================================================
+   🏆 分組排名
+   =========================================================== */
 function renderGroupRanking() {
   const box = document.getElementById("groupRanking");
   box.innerHTML = "";
@@ -499,27 +639,18 @@ function renderGroupRanking() {
     box.appendChild(div);
   });
 }
-
-</script>
-<script>
-document.addEventListener("DOMContentLoaded", () => {
-  renderIndividualPage();
-  renderGroups();
-  renderDangerZone();
-  renderGroupRanking();
-});
 </script>
 <!-- ========================= -->
-<!--  PAGE 2: 小組計分頁（骨架）  -->
+<!--  PAGE 2: 小組計分頁（完整功能） -->
 <!-- ========================= -->
 <div id="page-group" class="page">
 
-  <h2>小組計分（建構中 · Step 2 加功能）</h2>
+  <h2>小組計分</h2>
 
   <p style="color:#555;">
-    ➤ 左邊：未分組學生  
-    ➤ 右邊：小組（可拖曳學生）  
-    ➤ 每個組都有：個人分、組分、自動結算（下一步加入）
+    ➤ 左邊：未分組學生（可拖曳）<br>
+    ➤ 右邊：小組（可拖曳學生進入）<br>
+    ➤ 每個組都有：組員個人 +/−、自動組分、結算按鈕<br>
   </p>
 
   <div class="group-section">
@@ -527,22 +658,22 @@ document.addEventListener("DOMContentLoaded", () => {
     <!-- 左側：未分組學生 -->
     <div class="group-col">
       <h3>未分組學生</h3>
+
       <div id="ungroupedList" class="student-list">
-        <!-- 之後會加入拖曳 -->
+        <!-- 由 JS 渲染 -->
       </div>
     </div>
 
-    <!-- 右側：小組 -->
+    <!-- 右側：小組列表 -->
     <div class="group-col">
       <h3>小組列表</h3>
 
-      <!-- 待加入功能：新增小組按鈕 -->
-      <button class="btn-primary" onclick="alert('小組功能會在 Step 2 建好！')">
+      <button class="btn-primary" onclick="addGroup()">
         ＋ 新增小組
       </button>
 
       <div id="groupList" style="margin-top:12px;">
-        <!-- 小組卡片會在 Step 2 生成 -->
+        <!-- JS 生成組卡 -->
       </div>
     </div>
 
@@ -550,36 +681,43 @@ document.addEventListener("DOMContentLoaded", () => {
 
   <hr style="margin:24px 0;">
 
-  <!-- 危險區 / 分組排名（Step 2 加） -->
-  <div>
-    <h3>分組排名（Step 2 加）</h3>
-    <div id="groupRanking"></div>
+  <!-- 排名 & 危險區 -->
+  <h3>🏆 分組排名</h3>
+  <div id="groupRanking"></div>
 
-    <h3 style="margin-top:20px;">⚠️ 危險區（今日未得分）</h3>
-    <div id="dangerZone"></div>
-  </div>
+  <h3 style="margin-top:20px;">⚠️ 危險區（今日 0 分）</h3>
+  <div id="dangerZone"></div>
 
 </div>
-
 <!-- ========================= -->
-<!--  PAGE 3: 作業訂正頁（骨架） -->
+<!--  PAGE 3: 作業訂正頁（完整框架） -->
 <!-- ========================= -->
 <div id="page-homework" class="page">
-  <h2>作業訂正（建構中 · Step 2 加功能）</h2>
 
+  <h2>作業訂正</h2>
+
+  <p style="color:#555;">
+    ➤ 下版本 Step 3 會加入：新增功課、學生狀態切換、準時交 +1、過濾器功能<br>
+    ➤ 以下是已準備好的框架（可正常顯示）
+  </p>
+
+  <!-- 新增功課 -->
   <div style="margin-bottom:12px;">
     <input id="newHomeworkTitle" type="text" placeholder="輸入功課名稱">
-    <button class="btn-primary"
-      onclick="alert('作業功能會在 Step 2 加入！')">
+    <button class="btn-primary" onclick="alert('Step 3 才會加入完整作業邏輯')">
       ＋ 新增功課
     </button>
   </div>
 
+  <!-- 作業列表 -->
   <div id="homeworkList">
-    <!-- 功課卡片會在 Step 2 加入 -->
+    <!-- Step 3 會由 JS 自動渲染功課卡 -->
+    <div class="hw-card" style="color:#777;">
+      （Step 3 會啟動作業頁完整功能）
+    </div>
   </div>
-</div>
 
+</div>
 <!-- ========================= -->
 <!--  NEW STUDENT SECTION      -->
 <!-- ========================= -->
@@ -596,10 +734,7 @@ document.addEventListener("DOMContentLoaded", () => {
   </div>
 </div>
 
-<!-- ========================= -->
-<!--  HTML END                -->
-<!-- ========================= -->
+</div> <!-- container END -->
 
-</div> <!-- container end -->
 </body>
 </html>
