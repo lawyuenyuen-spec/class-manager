@@ -338,6 +338,51 @@ function renderIndividualPage() {
   });
 }
 /* ===========================================================
+   👤 個人計分頁：渲染（已修正、乾淨）
+   =========================================================== */
+function renderIndividualPage() {
+  const container = document.getElementById("individualList");
+  container.innerHTML = "";
+
+  const sorted = [...state.students].sort((a, b) => Number(a.seat) - Number(b.seat));
+
+  sorted.forEach(stu => {
+    const card = document.createElement("div");
+    card.className = "student-card";
+
+    card.innerHTML = `
+      <div class="between">
+        <strong>${stu.seat}. ${stu.name}</strong>
+
+        <div style="display:flex; gap:6px; align-items:center;">
+          <div class="score-num">${stu.totalScore}</div>
+
+          <button class="btn-secondary" style="padding:4px 8px;font-size:12px;"
+            onclick="editStudent(${stu.id})">
+            編輯
+          </button>
+
+          <button class="btn-danger" style="padding:4px 8px;font-size:12px;"
+            onclick="deleteStudent(${stu.id})">
+            刪除
+          </button>
+        </div>
+      </div>
+
+      <div class="between" style="margin-top:6px;">
+        <button class="minus-btn" onclick="changePersonalScore(${stu.id}, -1)">−</button>
+        <button class="plus-btn" onclick="changePersonalScore(${stu.id}, +1)">+</button>
+      </div>
+
+      <button class="redeem-btn" onclick="redeemCard(${stu.id})">
+        兌換一張卡（-5分）
+      </button>
+    `;
+
+    container.appendChild(card);
+  });
+}
+/* ===========================================================
    ✏️ 編輯學生（座號 + 名字）
    =========================================================== */
 function editStudent(id) {
@@ -360,6 +405,7 @@ function editStudent(id) {
   renderGroupRanking();
   renderDangerZone();
 }
+
   </div>
 
   <div class="between" style="margin-top:6px;">
