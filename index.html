@@ -2,500 +2,430 @@
 <html lang="zh-Hant">
 <head>
   <meta charset="UTF-8" />
-  <title>課室管理小幫手</title>
+  <title>Class Manager 班級小幫手</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
+    :root {
+      --bg: #e5e7eb;
+      --card-bg: #f9fafb;
+      --primary: #2563eb;
+      --primary-dark: #1d4ed8;
+      --danger: #ef4444;
+      --success: #16a34a;
+      --text-main: #111827;
+      --text-muted: #6b7280;
+      --radius-lg: 18px;
+    }
+    * {
+      box-sizing: border-box;
+    }
     body {
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       margin: 0;
       padding: 16px;
-      background: #f5f5f5;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: radial-gradient(circle at top left, #ffffff, #d1d5db);
     }
     .container {
-      max-width: 900px;
+      max-width: 1100px;
       margin: 0 auto;
-      background: #ffffff;
-      border-radius: 12px;
-      padding: 20px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      background: rgba(255,255,255,0.9);
+      border-radius: 24px;
+      padding: 20px 20px 28px;
+      box-shadow: 0 25px 50px -12px rgba(15,23,42,0.35);
+      backdrop-filter: blur(10px);
     }
     h1 {
-      margin-top: 0;
+      margin: 0 0 12px;
       text-align: center;
+      font-size: 22px;
+      letter-spacing: 0.03em;
+      color: var(--text-main);
     }
+    .subtext {
+      text-align: center;
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 14px;
+    }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      gap: 6px;
+      background: #e5e7eb;
+      padding: 4px;
+      border-radius: 999px;
+      margin-bottom: 16px;
+      overflow-x: auto;
+    }
+    .tab-button {
+      flex: 1;
+      min-width: 0;
+      border: none;
+      border-radius: 999px;
+      padding: 8px 10px;
+      font-size: 13px;
+      cursor: pointer;
+      background: transparent;
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+    .tab-button.active {
+      background: #111827;
+      color: #f9fafb;
+      font-weight: 600;
+      box-shadow: 0 6px 15px rgba(15,23,42,0.35);
+    }
+
+    /* Shared controls */
     .row {
       display: flex;
       flex-wrap: wrap;
       gap: 8px;
-      margin-bottom: 12px;
+      margin-bottom: 10px;
       align-items: center;
     }
     label {
-      font-size: 14px;
-      margin-right: 4px;
+      font-size: 13px;
+      color: var(--text-main);
     }
     input[type="text"],
     input[type="number"] {
       padding: 6px 8px;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-      font-size: 14px;
+      border-radius: 999px;
+      border: 1px solid #d1d5db;
+      font-size: 13px;
+      min-width: 0;
+    }
+    input[type="text"]:focus,
+    input[type="number"]:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 1px rgba(37,99,235,0.25);
     }
     button {
       padding: 6px 12px;
       border-radius: 999px;
       border: none;
       cursor: pointer;
-      font-size: 14px;
+      font-size: 13px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      white-space: nowrap;
     }
     button.primary {
-      background: #2563eb;
+      background: var(--primary);
       color: white;
+    }
+    button.primary:hover {
+      background: var(--primary-dark);
     }
     button.secondary {
       background: #e5e7eb;
       color: #111827;
     }
     button.danger {
-      background: #ef4444;
+      background: var(--danger);
       color: white;
     }
     button:disabled {
       opacity: 0.5;
       cursor: not-allowed;
     }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 12px;
+
+    /* Sections */
+    .page {
+      display: none;
     }
-    th, td {
-      border-bottom: 1px solid #e5e7eb;
-      padding: 8px;
+    .page.active {
+      display: block;
+    }
+
+    /* Cards grid */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+      gap: 12px;
+      margin-top: 10px;
+    }
+    .card {
+      background: var(--card-bg);
+      border-radius: var(--radius-lg);
+      padding: 10px 12px 12px;
+      box-shadow: 0 10px 25px rgba(15,23,42,0.12);
+      position: relative;
+    }
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+      font-size: 13px;
+      color: var(--text-main);
+      font-weight: 600;
+    }
+    .card-score {
       text-align: center;
-      font-size: 14px;
+      font-size: 26px;
+      font-weight: 700;
+      margin: 4px 0 6px;
+      color: var(--text-main);
     }
-    th {
-      background: #f9fafb;
-      font-weight: 600;
+    .card-actions {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
     }
-    .score {
-      font-weight: 600;
+    .btn-round {
+      width: 34px;
+      height: 34px;
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      border: none;
+      color: white;
+      cursor: pointer;
+    }
+    .btn-minus {
+      background: var(--danger);
+    }
+    .btn-plus {
+      background: var(--success);
+    }
+    .pill {
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      background: #e5e7eb;
+      color: var(--text-muted);
     }
     .badge {
       display: inline-block;
       padding: 2px 8px;
       border-radius: 999px;
-      background: #e0f2fe;
-      color: #0369a1;
-      font-size: 12px;
+      background: #dbeafe;
+      color: #1d4ed8;
+      font-size: 11px;
     }
-    .card {
-      border-radius: 10px;
-      background: #f9fafb;
+
+    .summary {
+      border-radius: 999px;
+      background: rgba(15,23,42,0.9);
+      color: #e5e7eb;
+      padding: 6px 12px;
+      font-size: 12px;
+      display: inline-flex;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 6px;
+      box-shadow: 0 10px 30px rgba(15,23,42,0.5);
+    }
+    .summary span {
+      white-space: nowrap;
+    }
+
+    /* Ranking & tools */
+    .card-sub {
+      border-radius: 16px;
+      background: rgba(249,250,251,0.95);
       padding: 10px 12px;
       margin-top: 12px;
-      font-size: 14px;
-    }
-    .group-box {
-      margin-top: 8px;
-      padding: 8px;
-      border-radius: 8px;
-      background: #f3f4f6;
       font-size: 13px;
+      box-shadow: 0 6px 18px rgba(15,23,42,0.12);
     }
-    .small-tip {
-      font-size: 12px;
-      color: #6b7280;
-      margin-top: 4px;
+    .card-sub-title {
+      font-weight: 600;
+      margin-bottom: 4px;
     }
     ol {
       padding-left: 20px;
-      margin: 6px 0 0 0;
+      margin: 4px 0 0;
+      font-size: 13px;
     }
-    @media (max-width: 600px) {
-      th, td { font-size: 12px; }
-      button { font-size: 12px; padding: 4px 8px; }
+    .small-text {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    /* Homework status */
+    .hw-card {
+      cursor: pointer;
+      transition: transform 0.1s ease, box-shadow 0.1s ease;
+    }
+    .hw-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 14px 30px rgba(15,23,42,0.18);
+    }
+    .hw-status {
+      font-size: 13px;
+      margin-top: 3px;
+      font-weight: 600;
+    }
+    .hw-not {
+      background: #fee2e2;
+      color: #b91c1c;
+    }
+    .hw-submitted {
+      background: #dbeafe;
+      color: #1d4ed8;
+    }
+    .hw-needs {
+      background: #fef3c7;
+      color: #92400e;
+    }
+    .hw-done {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    /* Group cards */
+    .group-name {
+      font-weight: 600;
+      font-size: 14px;
+      color: var(--text-main);
+    }
+    .group-score {
+      font-size: 22px;
+      font-weight: 700;
+      text-align: center;
+      margin: 4px 0 6px;
+    }
+
+    @media (max-width: 640px) {
+      .container {
+        padding: 14px 12px 18px;
+        border-radius: 18px;
+      }
+      h1 {
+        font-size: 18px;
+      }
+      .card {
+        border-radius: 16px;
+      }
+      .grid {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      }
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>班級積分表</h1>
+    <h1>Class Manager 班級小幫手</h1>
+    <div class="subtext">個人計分 · 小組計分 · 作業訂正</div>
 
-    <!-- 班級設定 -->
-    <div class="row">
-      <label for="className">班級名稱：</label>
-      <input type="text" id="className" placeholder="例如：6C" />
-      <button class="secondary" id="saveClassNameBtn">儲存班名</button>
-      <span class="badge" id="classNameDisplay"></span>
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab-button active" data-target="page-individual">個人計分</button>
+      <button class="tab-button" data-target="page-groups">小組計分</button>
+      <button class="tab-button" data-target="page-homework">作業訂正</button>
     </div>
 
-    <!-- 新增學生 -->
+    <!-- Shared controls -->
+    <div class="row">
+      <label for="className">班級名稱：</label>
+      <input type="text" id="className" placeholder="例如：6C 勤學班" />
+      <button class="secondary" id="saveClassNameBtn">儲存班名</button>
+      <span class="badge" id="classNameDisplay">（未設定班名）</span>
+    </div>
+
     <div class="row">
       <label for="seatNo">座號：</label>
       <input type="number" id="seatNo" min="1" style="width: 70px;" />
       <label for="studentName">姓名：</label>
-      <input type="text" id="studentName" placeholder="姓名" />
+      <input type="text" id="studentName" placeholder="學生姓名" />
       <button class="primary" id="addStudentBtn">新增學生</button>
+      <span class="small-text">新增學生會同步到三個頁面</span>
     </div>
 
-    <!-- 總覽 -->
-    <div class="card">
-      👀 班級總分：<span id="totalScore">0</span> 分  
-      | 學生人數：<span id="studentCount">0</span> 人
+    <div class="summary">
+      <span>👀 班級總分：<span id="totalScore">0</span> 分</span>
+      <span>👧👦 學生人數：<span id="studentCount">0</span> 人</span>
     </div>
 
-    <!-- 排行榜 -->
-    <div class="card">
-      <strong>🏆 排行榜（前 5 名）</strong>
-      <div id="rankingWrapper" class="small-tip">暫時未有分數差距</div>
-      <ol id="rankingList"></ol>
-    </div>
-
-    <!-- 隨機抽籤 -->
-    <div class="card">
-      <div class="row">
-        <label for="drawCount">抽出人數：</label>
-        <input type="number" id="drawCount" min="1" value="1" style="width: 70px;" />
-        <label style="display:flex;align-items:center;font-size:13px;">
-          <input type="checkbox" id="noRepeatCheckbox" checked style="margin-right:4px;" />
-          不重複抽籤（用完一輪先重置）
-        </label>
-        <button class="secondary" id="drawBtn">🎲 抽籤</button>
-        <button class="danger" id="resetDrawPoolBtn">重置抽籤池</button>
-      </div>
-      <div id="drawResult" class="group-box">尚未抽籤</div>
-      <div class="small-tip">
-        提示：不重複模式下，系統會用完每位同學一次，先會重新開始。
-      </div>
-    </div>
-
-    <!-- 隨機分組 -->
-    <div class="card">
-      <div class="row">
-        <label for="groupSize">每組人數：</label>
-        <input type="number" id="groupSize" min="2" max="8" value="4" style="width: 70px;" />
-        <button class="secondary" id="randomGroupBtn">📚 一鍵隨機分組</button>
-      </div>
-      <div id="groupResult" class="group-box"></div>
-    </div>
-
-    <!-- 學生表格 -->
-    <table>
-      <thead>
-        <tr>
-          <th>座號</th>
-          <th>姓名</th>
-          <th>分數</th>
-          <th>操作</th>
-          <th>移除</th>
-        </tr>
-      </thead>
-      <tbody id="studentTableBody">
+    <!-- 個人計分頁 -->
+    <section id="page-individual" class="page active">
+      <div id="studentCards" class="grid">
         <!-- JS 產生 -->
-      </tbody>
-    </table>
+      </div>
+
+      <!-- 排行榜 -->
+      <div class="card-sub">
+        <div class="card-sub-title">🏆 排行榜（前 5 名）</div>
+        <div id="rankingWrapper" class="small-text">暫時未有分數差距</div>
+        <ol id="rankingList"></ol>
+      </div>
+
+      <!-- 抽籤 -->
+      <div class="card-sub">
+        <div class="card-sub-title">🎲 隨機抽籤</div>
+        <div class="row" style="margin-bottom:6px;">
+          <label for="drawCount">抽出人數：</label>
+          <input type="number" id="drawCount" min="1" value="1" style="width: 70px;" />
+          <label style="display:flex;align-items:center;font-size:12px;">
+            <input type="checkbox" id="noRepeatCheckbox" checked style="margin-right:4px;" />
+            不重複抽籤（用完一輪先重置）
+          </label>
+          <button class="secondary" id="drawBtn">抽籤</button>
+          <button class="danger" id="resetDrawPoolBtn">重置抽籤池</button>
+        </div>
+        <div id="drawResult" class="small-text">尚未抽籤</div>
+      </div>
+
+      <!-- 隨機分組 -->
+      <div class="card-sub">
+        <div class="card-sub-title">📚 隨機分組</div>
+        <div class="row" style="margin-bottom:6px;">
+          <label for="groupSize">每組人數：</label>
+          <input type="number" id="groupSize" min="2" max="8" value="4" style="width: 70px;" />
+          <button class="secondary" id="randomGroupBtn">一鍵隨機分組</button>
+        </div>
+        <div id="groupResult" class="small-text"></div>
+      </div>
+    </section>
+
+    <!-- 小組計分頁 -->
+    <section id="page-groups" class="page">
+      <div class="row">
+        <label for="groupNameInput">小組名稱：</label>
+        <input type="text" id="groupNameInput" placeholder="例如：一組、二組、藍隊…" />
+        <button class="primary" id="addGroupBtn">新增小組</button>
+      </div>
+      <div class="small-text">提示：小組與上面隨機分組互相獨立，你可以自由命名及計分。</div>
+      <div id="groupCards" class="grid" style="margin-top:12px;">
+        <!-- JS 產生 -->
+      </div>
+    </section>
+
+    <!-- 作業訂正頁 -->
+    <section id="page-homework" class="page">
+      <div class="row">
+        <label for="homeworkTitle">作業名稱：</label>
+        <input type="text" id="homeworkTitle" placeholder="例如：單元二詞語工作紙" />
+      </div>
+      <div class="small-text">
+        點擊學生卡片即可切換狀態：
+        <span class="pill hw-not">未繳交</span> →
+        <span class="pill hw-submitted">已繳交</span> →
+        <span class="pill hw-needs">待訂正</span> →
+        <span class="pill hw-done">已訂正</span>
+      </div>
+      <div id="homeworkCards" class="grid" style="margin-top:10px;">
+        <!-- JS 產生 -->
+      </div>
+    </section>
   </div>
 
   <script>
-    const STORAGE_KEY = "classManager6C";
+    const STORAGE_KEY = "classManager_v3";
 
-    let state = {
-      className: "",
-      students: [],  // { id, seatNo, name, score }
-      drawPool: []   // 存住未被抽過的學生 id（不重複抽籤用）
-    };
+    const HOMEWORK_STATES = [
+      { key: "not_submitted", label: "未繳交", className: "hw-not" },
+      { key: "submitted", label: "已繳交", className: "hw-submitted" },
+      { key: "needs_correction", label: "待訂正", className: "hw-needs" },
+      { key: "corrected", label: "已訂正", className: "hw-done"
 
-    // 讀取 localStorage
-    function loadState() {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return;
-      try {
-        const data = JSON.parse(raw);
-        if (data && Array.isArray(data.students)) {
-          state.className = data.className || "";
-          state.students = data.students;
-          state.drawPool = Array.isArray(data.drawPool) ? data.drawPool : [];
-        }
-      } catch (e) {
-        console.error("載入資料失敗", e);
-      }
-    }
-
-    // 儲存到 localStorage
-    function saveState() {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    }
-
-    function render() {
-      // 班名
-      const classNameDisplay = document.getElementById("classNameDisplay");
-      const classNameInput = document.getElementById("className");
-      classNameInput.value = state.className || "";
-      classNameDisplay.textContent = state.className || "（未設定班名）";
-
-      // 學生表格
-      const tbody = document.getElementById("studentTableBody");
-      tbody.innerHTML = "";
-
-      let total = 0;
-      state.students
-        .slice()
-        .sort((a, b) => Number(a.seatNo) - Number(b.seatNo))
-        .forEach((stu) => {
-        total += stu.score;
-        const tr = document.createElement("tr");
-
-        const tdSeat = document.createElement("td");
-        tdSeat.textContent = stu.seatNo;
-        tr.appendChild(tdSeat);
-
-        const tdName = document.createElement("td");
-        tdName.textContent = stu.name;
-        tr.appendChild(tdName);
-
-        const tdScore = document.createElement("td");
-        tdScore.innerHTML = `<span class="score">${stu.score}</span>`;
-        tr.appendChild(tdScore);
-
-        const tdActions = document.createElement("td");
-        const plusBtn = document.createElement("button");
-        plusBtn.textContent = "+1";
-        plusBtn.className = "primary";
-        plusBtn.onclick = () => changeScore(stu.id, 1);
-
-        const minusBtn = document.createElement("button");
-        minusBtn.textContent = "-1";
-        minusBtn.className = "secondary";
-        minusBtn.style.marginLeft = "4px";
-        minusBtn.onclick = () => changeScore(stu.id, -1);
-
-        tdActions.appendChild(plusBtn);
-        tdActions.appendChild(minusBtn);
-        tr.appendChild(tdActions);
-
-        const tdRemove = document.createElement("td");
-        const delBtn = document.createElement("button");
-        delBtn.textContent = "刪除";
-        delBtn.className = "danger";
-        delBtn.onclick = () => removeStudent(stu.id);
-        tdRemove.appendChild(delBtn);
-        tr.appendChild(tdRemove);
-
-        tbody.appendChild(tr);
-      });
-
-      // 總分／人數
-      document.getElementById("totalScore").textContent = total;
-      document.getElementById("studentCount").textContent = state.students.length;
-
-      renderRanking();
-    }
-
-    // 排行榜
-    function renderRanking() {
-      const rankingList = document.getElementById("rankingList");
-      const rankingWrapper = document.getElementById("rankingWrapper");
-      rankingList.innerHTML = "";
-
-      if (state.students.length === 0) {
-        rankingWrapper.textContent = "尚未加入學生";
-        return;
-      }
-
-      const ranked = state.students
-        .slice()
-        .sort((a, b) => b.score - a.score);
-
-      if (ranked.length === 0 || ranked[0].score === 0) {
-        rankingWrapper.textContent = "暫時未有分數差距";
-        return;
-      }
-
-      rankingWrapper.textContent = "";
-      ranked.slice(0, 5).forEach((stu, index) => {
-        const li = document.createElement("li");
-        li.textContent = `${stu.seatNo}.${stu.name}（${stu.score}分）`;
-        rankingList.appendChild(li);
-      });
-    }
-
-    function addStudent() {
-      const seatInput = document.getElementById("seatNo");
-      const nameInput = document.getElementById("studentName");
-      const seatNo = seatInput.value.trim();
-      const name = nameInput.value.trim();
-
-      if (!seatNo || !name) {
-        alert("請輸入座號和姓名");
-        return;
-      }
-
-      // 檢查重複座號
-      if (state.students.some((s) => String(s.seatNo) === String(seatNo))) {
-        if (!confirm("已經有相同座號，確定要再新增嗎？")) return;
-      }
-
-      const newStudent = {
-        id: Date.now() + Math.random(),
-        seatNo,
-        name,
-        score: 0
-      };
-      state.students.push(newStudent);
-
-      // 每次改動學生名單，就重置抽籤池
-      resetDrawPool(false);
-
-      saveState();
-      render();
-
-      seatInput.value = "";
-      nameInput.value = "";
-      seatInput.focus();
-    }
-
-    function changeScore(id, delta) {
-      const stu = state.students.find((s) => s.id === id);
-      if (!stu) return;
-      stu.score += delta;
-      saveState();
-      render();
-    }
-
-    function removeStudent(id) {
-      if (!confirm("確定要刪除這位學生？")) return;
-      state.students = state.students.filter((s) => s.id !== id);
-      resetDrawPool(false);
-      saveState();
-      render();
-    }
-
-    function saveClassName() {
-      const input = document.getElementById("className");
-      state.className = input.value.trim();
-      saveState();
-      render();
-    }
-
-    // 初始化／重置抽籤池
-    function resetDrawPool(showMessage = true) {
-      state.drawPool = state.students.map((s) => s.id);
-      saveState();
-      if (showMessage) {
-        document.getElementById("drawResult").textContent = "抽籤池已重置，可以重新抽籤。";
-      }
-    }
-
-    // 隨機抽籤
-    function randomDraw() {
-      const drawCountInput = document.getElementById("drawCount");
-      const noRepeatCheckbox = document.getElementById("noRepeatCheckbox");
-      const drawResultDiv = document.getElementById("drawResult");
-
-      let count = Number(drawCountInput.value);
-      if (!count || count < 1) count = 1;
-
-      if (state.students.length === 0) {
-        alert("請先新增學生");
-        return;
-      }
-
-      const noRepeat = noRepeatCheckbox.checked;
-
-      let selectedStudents = [];
-
-      if (!noRepeat) {
-        // 允許重複：每次從所有學生中抽
-        for (let i = 0; i < count; i++) {
-          const randomIndex = Math.floor(Math.random() * state.students.length);
-          selectedStudents.push(state.students[randomIndex]);
-        }
-      } else {
-        // 不重複抽籤：用 drawPool
-        if (!Array.isArray(state.drawPool) || state.drawPool.length === 0) {
-          // 如果抽籤池空，重新建立
-          resetDrawPool(false);
-        }
-
-        if (state.drawPool.length === 0) {
-          alert("目前沒有可抽的學生，請重置抽籤池。");
-          return;
-        }
-
-        const pool = [...state.drawPool];
-        selectedStudents = [];
-
-        for (let i = 0; i < count; i++) {
-          if (pool.length === 0) break;
-          const index = Math.floor(Math.random() * pool.length);
-          const id = pool.splice(index, 1)[0];
-          const stu = state.students.find((s) => s.id === id);
-          if (stu) selectedStudents.push(stu);
-        }
-
-        state.drawPool = pool;
-        saveState();
-      }
-
-      if (selectedStudents.length === 0) {
-        drawResultDiv.textContent = "暫時無法抽出學生，可能人數不足。";
-        return;
-      }
-
-      const text = selectedStudents
-        .map((s) => `${s.seatNo}.${s.name}（${s.score}分）`)
-        .join("、");
-
-      drawResultDiv.textContent = `被抽中的同學：${text}`;
-
-      if (noRepeat && state.drawPool.length === 0) {
-        drawResultDiv.textContent += " ｜ 已用完一輪，請按「重置抽籤池」重新開始。";
-      }
-    }
-
-    // 隨機分組
-    function randomGroup() {
-      const sizeInput = document.getElementById("groupSize");
-      const resultDiv = document.getElementById("groupResult");
-      const size = Number(sizeInput.value);
-
-      if (!size || size < 2) {
-        alert("請設定每組至少 2 人");
-        return;
-      }
-      if (state.students.length < 2) {
-        alert("學生太少，無法分組");
-        return;
-      }
-
-      const shuffled = [...state.students].sort(() => Math.random() - 0.5);
-      const groups = [];
-      for (let i = 0; i < shuffled.length; i += size) {
-        groups.push(shuffled.slice(i, i + size));
-      }
-
-      let html = "";
-      groups.forEach((group, index) => {
-        const members = group
-          .map((s) => `${s.seatNo}.${s.name}（${s.score}分）`)
-          .join("、");
-        html += `<div>第 ${index + 1} 組：${members}</div>`;
-      });
-      resultDiv.innerHTML = html;
-    }
-
-    // 綁定事件
-    document.getElementById("addStudentBtn").onclick = addStudent;
-    document.getElementById("saveClassNameBtn").onclick = saveClassName;
-    document.getElementById("randomGroupBtn").onclick = randomGroup;
-    document.getElementById("drawBtn").onclick = randomDraw;
-    document.getElementById("resetDrawPoolBtn").onclick = () => resetDrawPool(true);
-
-    // 初始化
-    loadState();
-    render();
-  </script>
-</body>
-</html>
