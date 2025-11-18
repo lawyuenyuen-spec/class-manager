@@ -2,874 +2,459 @@
 <html lang="zh-Hant">
 <head>
   <meta charset="UTF-8" />
-  <title>Class Manager 班級小幫手</title>
+  <title>Class Manager 班級小幫手 v4</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+
   <style>
-    :root {
-      --bg: #e5e7eb;
-      --card-bg: #f9fafb;
-      --primary: #2563eb;
-      --primary-dark: #1d4ed8;
-      --danger: #ef4444;
-      --success: #16a34a;
-      --text-main: #111827;
-      --text-muted: #6b7280;
-      --radius-lg: 18px;
-    }
-    * {
-      box-sizing: border-box;
-    }
     body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial;
+      background: #f5f7fa;
       margin: 0;
-      padding: 16px;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background: radial-gradient(circle at top left, #ffffff, #d1d5db);
+      padding: 0;
     }
+
     .container {
       max-width: 1100px;
       margin: 0 auto;
-      background: rgba(255,255,255,0.9);
-      border-radius: 24px;
-      padding: 20px 20px 28px;
-      box-shadow: 0 25px 50px -12px rgba(15,23,42,0.35);
-      backdrop-filter: blur(10px);
+      padding: 24px;
     }
+
     h1 {
-      margin: 0 0 12px;
       text-align: center;
-      font-size: 22px;
-      letter-spacing: 0.03em;
-      color: var(--text-main);
-    }
-    .subtext {
-      text-align: center;
-      font-size: 13px;
-      color: var(--text-muted);
-      margin-bottom: 14px;
+      margin-bottom: 12px;
+      color: #222;
     }
 
     /* Tabs */
     .tabs {
       display: flex;
-      gap: 6px;
       background: #e5e7eb;
+      border-radius: 999px;
       padding: 4px;
-      border-radius: 999px;
-      margin-bottom: 16px;
-      overflow-x: auto;
+      margin-bottom: 20px;
     }
-    .tab-button {
+
+    .tab-btn {
       flex: 1;
-      min-width: 0;
-      border: none;
+      padding: 10px;
       border-radius: 999px;
-      padding: 8px 10px;
-      font-size: 13px;
-      cursor: pointer;
+      border: none;
       background: transparent;
-      color: var(--text-muted);
-      white-space: nowrap;
-    }
-    .tab-button.active {
-      background: #111827;
-      color: #f9fafb;
-      font-weight: 600;
-      box-shadow: 0 6px 15px rgba(15,23,42,0.35);
-    }
-
-    /* Shared controls */
-    .row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-bottom: 10px;
-      align-items: center;
-    }
-    label {
-      font-size: 13px;
-      color: var(--text-main);
-    }
-    input[type="text"],
-    input[type="number"] {
-      padding: 6px 8px;
-      border-radius: 999px;
-      border: 1px solid #d1d5db;
-      font-size: 13px;
-      min-width: 0;
-    }
-    input[type="text"]:focus,
-    input[type="number"]:focus {
-      outline: none;
-      border-color: var(--primary);
-      box-shadow: 0 0 0 1px rgba(37,99,235,0.25);
-    }
-    button {
-      padding: 6px 12px;
-      border-radius: 999px;
-      border: none;
       cursor: pointer;
-      font-size: 13px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 4px;
-      white-space: nowrap;
-    }
-    button.primary {
-      background: var(--primary);
-      color: white;
-    }
-    button.primary:hover {
-      background: var(--primary-dark);
-    }
-    button.secondary {
-      background: #e5e7eb;
-      color: #111827;
-    }
-    button.danger {
-      background: var(--danger);
-      color: white;
-    }
-    button:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
+      font-size: 15px;
+      color: #555;
     }
 
-    /* Sections */
+    .tab-btn.active {
+      background: white;
+      font-weight: bold;
+      color: #111;
+      box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+    }
+
+    /* Pages */
     .page {
       display: none;
     }
+
     .page.active {
       display: block;
     }
 
-    /* Cards grid */
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
-      gap: 12px;
-      margin-top: 10px;
+    /* Inputs */
+    input[type="text"], input[type="number"] {
+      padding: 6px 10px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 14px;
     }
+
+    button {
+      padding: 6px 12px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .btn-primary {
+      background: #2563eb;
+      color: white;
+    }
+
+    .btn-danger {
+      background: #dc2626;
+      color: white;
+    }
+
+    .btn-secondary {
+      background: #e5e7eb;
+    }
+
+    /* Card */
     .card {
-      background: var(--card-bg);
-      border-radius: var(--radius-lg);
-      padding: 10px 12px 12px;
-      box-shadow: 0 10px 25px rgba(15,23,42,0.12);
-      position: relative;
+      background: white;
+      padding: 14px;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+      margin-bottom: 12px;
     }
-    .card-header {
+
+    .flex {
+      display: flex;
+      align-items: center;
+    }
+
+    .between {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 6px;
-      font-size: 13px;
-      color: var(--text-main);
-      font-weight: 600;
-    }
-    .card-score {
-      text-align: center;
-      font-size: 26px;
-      font-weight: 700;
-      margin: 4px 0 6px;
-      color: var(--text-main);
-    }
-    .card-actions {
-      display: flex;
-      justify-content: center;
-      gap: 8px;
-    }
-    .btn-round {
-      width: 34px;
-      height: 34px;
-      border-radius: 999px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 18px;
-      border: none;
-      color: white;
-      cursor: pointer;
-    }
-    .btn-minus {
-      background: var(--danger);
-    }
-    .btn-plus {
-      background: var(--success);
-    }
-    .pill {
-      padding: 2px 8px;
-      border-radius: 999px;
-      font-size: 11px;
-      background: #e5e7eb;
-      color: var(--text-muted);
-    }
-    .badge {
-      display: inline-block;
-      padding: 2px 8px;
-      border-radius: 999px;
-      background: #dbeafe;
-      color: #1d4ed8;
-      font-size: 11px;
     }
 
-    .summary {
-      border-radius: 999px;
-      background: rgba(15,23,42,0.9);
-      color: #e5e7eb;
-      padding: 6px 12px;
-      font-size: 12px;
-      display: inline-flex;
+    .student-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
       gap: 12px;
-      align-items: center;
-      margin-bottom: 6px;
-      box-shadow: 0 10px 30px rgba(15,23,42,0.5);
-    }
-    .summary span {
-      white-space: nowrap;
-    }
-
-    /* Ranking & tools */
-    .card-sub {
-      border-radius: 16px;
-      background: rgba(249,250,251,0.95);
-      padding: 10px 12px;
       margin-top: 12px;
-      font-size: 13px;
-      box-shadow: 0 6px 18px rgba(15,23,42,0.12);
-    }
-    .card-sub-title {
-      font-weight: 600;
-      margin-bottom: 4px;
-    }
-    ol {
-      padding-left: 20px;
-      margin: 4px 0 0;
-      font-size: 13px;
-    }
-    .small-text {
-      font-size: 11px;
-      color: var(--text-muted);
-      margin-top: 2px;
     }
 
-    /* Homework status */
-    .hw-card {
+    .student-card {
+      background: white;
+      border-radius: 12px;
+      padding: 12px;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.08);
+    }
+
+    .score-num {
+      font-size: 24px;
+      font-weight: bold;
+      margin: 4px 0;
+    }
+
+    .plus-btn, .minus-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      font-size: 20px;
+      border: none;
       cursor: pointer;
-      transition: transform 0.1s ease, box-shadow 0.1s ease;
-    }
-    .hw-card:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 14px 30px rgba(15,23,42,0.18);
-    }
-    .hw-status {
-      font-size: 13px;
-      margin-top: 3px;
-      font-weight: 600;
-    }
-    .hw-not {
-      background: #fee2e2;
-      color: #b91c1c;
-    }
-    .hw-submitted {
-      background: #dbeafe;
-      color: #1d4ed8;
-    }
-    .hw-needs {
-      background: #fef3c7;
-      color: #92400e;
-    }
-    .hw-done {
-      background: #dcfce7;
-      color: #166534;
+      color: white;
     }
 
-    /* Group cards */
-    .group-name {
-      font-weight: 600;
-      font-size: 14px;
-      color: var(--text-main);
-    }
-    .group-score {
-      font-size: 22px;
-      font-weight: 700;
-      text-align: center;
-      margin: 4px 0 6px;
+    .plus-btn {
+      background: #16a34a;
     }
 
-    @media (max-width: 640px) {
-      .container {
-        padding: 14px 12px 18px;
-        border-radius: 18px;
-      }
-      h1 {
-        font-size: 18px;
-      }
-      .card {
-        border-radius: 16px;
-      }
-      .grid {
-        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-      }
+    .minus-btn {
+      background: #dc2626;
+    }
+
+    .redeem-btn {
+      margin-top: 4px;
+      background: #9333ea;
+      color: white;
+      width: 100%;
+      border-radius: 6px;
+    }
+
+    /* Group page skeleton */
+    .group-section {
+      display: flex;
+      gap: 20px;
+    }
+
+    .group-col {
+      flex: 1;
+    }
+
+    .group-card {
+      background: white;
+      padding: 14px;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+      margin-bottom: 12px;
+    }
+
+    /* Homework skeleton */
+    .hw-card {
+      padding: 12px;
+      border-radius: 12px;
+      background: white;
+      margin-bottom: 10px;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.08);
     }
   </style>
 </head>
+
 <body>
-  <div class="container">
-    <h1>Class Manager 班級小幫手</h1>
-    <div class="subtext">個人計分 · 小組計分 · 作業訂正</div>
+<div class="container">
 
-    <!-- Tabs -->
-    <div class="tabs">
-      <button class="tab-button active" data-target="page-individual">個人計分</button>
-      <button class="tab-button" data-target="page-groups">小組計分</button>
-      <button class="tab-button" data-target="page-homework">作業訂正</button>
+  <h1>Class Manager 班級小幫手 v4</h1>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab-btn active" data-page="page-individual">個人計分</button>
+    <button class="tab-btn" data-page="page-group">小組計分</button>
+    <button class="tab-btn" data-page="page-homework">作業訂正</button>
+  </div>
+<!-- ========================= -->
+<!--     JAVASCRIPT START      -->
+<!-- ========================= -->
+<script>
+/* -------------------------------
+   🧠 State Model（資料結構）
+-------------------------------- */
+let state = {
+  students: [
+    // {
+    //   id: 123,
+    //   seat: "1",
+    //   name: "小明",
+    //   totalScore: 0,
+    //   individualGroupScoreToday: 0
+    // }
+  ],
+
+  groups: [
+    // { id, name, memberIds: [], groupScore: 0 }
+  ],
+
+  homeworks: [
+    // { id, title, students: [{ studentId, checked, status }] }
+  ]
+};
+
+const STORAGE_KEY = "class_manager_v4";
+
+/* -------------------------------
+   📌 載入 LocalStorage
+-------------------------------- */
+function loadState() {
+  const saved = localStorage.getItem(STORAGE_KEY);
+  if (saved) {
+    state = JSON.parse(saved);
+  }
+}
+
+function saveState() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+
+/* -------------------------------
+   👤 新增學生
+-------------------------------- */
+function addStudent() {
+  const seat = document.getElementById("newSeat").value.trim();
+  const name = document.getElementById("newName").value.trim();
+
+  if (!seat || !name) {
+    alert("請輸入座號和姓名");
+    return;
+  }
+
+  state.students.push({
+    id: Date.now(),
+    seat,
+    name,
+    totalScore: 0,
+    individualGroupScoreToday: 0
+  });
+
+  saveState();
+  renderIndividualPage();
+
+  document.getElementById("newSeat").value = "";
+  document.getElementById("newName").value = "";
+}
+
+/* -------------------------------
+   👤 個人頁：加分 / 扣分 / 兌換卡
+-------------------------------- */
+function changePersonalScore(id, delta) {
+  const stu = state.students.find(s => s.id === id);
+  if (!stu) return;
+
+  stu.totalScore += delta;
+  if (stu.totalScore < 0) stu.totalScore = 0;
+
+  saveState();
+  renderIndividualPage();
+}
+
+function redeemCard(id) {
+  const stu = state.students.find(s => s.id === id);
+  if (!stu) return;
+
+  if (stu.totalScore < 5) {
+    alert("分數不足，不能兌換！");
+    return;
+  }
+
+  stu.totalScore -= 5;
+
+  saveState();
+  renderIndividualPage();
+}
+
+/* -------------------------------
+   👤 個人頁：渲染
+-------------------------------- */
+function renderIndividualPage() {
+  const container = document.getElementById("individualList");
+  container.innerHTML = "";
+
+  // sort by seat number
+  const list = [...state.students].sort(
+    (a, b) => Number(a.seat) - Number(b.seat)
+  );
+
+  list.forEach(stu => {
+    const card = document.createElement("div");
+    card.className = "student-card";
+
+    card.innerHTML = `
+      <div class="between">
+        <div><strong>${stu.seat}. ${stu.name}</strong></div>
+        <div class="score-num">${stu.totalScore}</div>
+      </div>
+
+      <div class="between" style="margin-top:6px;">
+        <button class="minus-btn" onclick="changePersonalScore(${stu.id}, -1)">−</button>
+        <button class="plus-btn" onclick="changePersonalScore(${stu.id}, +1)">+</button>
+      </div>
+
+      <button class="redeem-btn" onclick="redeemCard(${stu.id})">
+        兌換卡（-5 分）
+      </button>
+    `;
+
+    container.appendChild(card);
+  });
+}
+
+/* -------------------------------
+   🧩 Tabs 切換
+-------------------------------- */
+function initTabs() {
+  const tabs = document.querySelectorAll(".tab-btn");
+  const pages = document.querySelectorAll(".page");
+
+  tabs.forEach(btn => {
+    btn.addEventListener("click", () => {
+      const target = btn.dataset.page;
+
+      // update active tab
+      tabs.forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+
+      // show target page
+      pages.forEach(p => {
+        p.classList.toggle("active", p.id === target);
+      });
+    });
+  });
+}
+
+/* -------------------------------
+   🚀 Init
+-------------------------------- */
+loadState();
+initTabs();
+document.addEventListener("DOMContentLoaded", () => {
+  renderIndividualPage();
+});
+</script>
+<!-- ========================= -->
+<!--  PAGE 2: 小組計分頁（骨架）  -->
+<!-- ========================= -->
+<div id="page-group" class="page">
+
+  <h2>小組計分（建構中 · Step 2 加功能）</h2>
+
+  <p style="color:#555;">
+    ➤ 左邊：未分組學生  
+    ➤ 右邊：小組（可拖曳學生）  
+    ➤ 每個組都有：個人分、組分、自動結算（下一步加入）
+  </p>
+
+  <div class="group-section">
+
+    <!-- 左側：未分組學生 -->
+    <div class="group-col">
+      <h3>未分組學生</h3>
+      <div id="ungroupedList" class="student-list">
+        <!-- 之後會加入拖曳 -->
+      </div>
     </div>
 
-    <!-- Shared controls -->
-    <div class="row">
-      <label for="className">班級名稱：</label>
-      <input type="text" id="className" placeholder="例如：6C 勤學班" />
-      <button class="secondary" id="saveClassNameBtn">儲存班名</button>
-      <span class="badge" id="classNameDisplay">（未設定班名）</span>
+    <!-- 右側：小組 -->
+    <div class="group-col">
+      <h3>小組列表</h3>
+
+      <!-- 待加入功能：新增小組按鈕 -->
+      <button class="btn-primary" onclick="alert('小組功能會在 Step 2 建好！')">
+        ＋ 新增小組
+      </button>
+
+      <div id="groupList" style="margin-top:12px;">
+        <!-- 小組卡片會在 Step 2 生成 -->
+      </div>
     </div>
 
-    <div class="row">
-      <label for="seatNo">座號：</label>
-      <input type="number" id="seatNo" min="1" style="width: 70px;" />
-      <label for="studentName">姓名：</label>
-      <input type="text" id="studentName" placeholder="學生姓名" />
-      <button class="primary" id="addStudentBtn">新增學生</button>
-      <span class="small-text">新增學生會同步到三個頁面</span>
-    </div>
-
-    <div class="summary">
-      <span>👀 班級總分：<span id="totalScore">0</span> 分</span>
-      <span>👧👦 學生人數：<span id="studentCount">0</span> 人</span>
-    </div>
-
-    <!-- 個人計分頁 -->
-    <section id="page-individual" class="page active">
-      <div id="studentCards" class="grid">
-        <!-- JS 產生 -->
-      </div>
-
-      <!-- 排行榜 -->
-      <div class="card-sub">
-        <div class="card-sub-title">🏆 排行榜（前 5 名）</div>
-        <div id="rankingWrapper" class="small-text">暫時未有分數差距</div>
-        <ol id="rankingList"></ol>
-      </div>
-
-      <!-- 抽籤 -->
-      <div class="card-sub">
-        <div class="card-sub-title">🎲 隨機抽籤</div>
-        <div class="row" style="margin-bottom:6px;">
-          <label for="drawCount">抽出人數：</label>
-          <input type="number" id="drawCount" min="1" value="1" style="width: 70px;" />
-          <label style="display:flex;align-items:center;font-size:12px;">
-            <input type="checkbox" id="noRepeatCheckbox" checked style="margin-right:4px;" />
-            不重複抽籤（用完一輪先重置）
-          </label>
-          <button class="secondary" id="drawBtn">抽籤</button>
-          <button class="danger" id="resetDrawPoolBtn">重置抽籤池</button>
-        </div>
-        <div id="drawResult" class="small-text">尚未抽籤</div>
-      </div>
-
-      <!-- 隨機分組 -->
-      <div class="card-sub">
-        <div class="card-sub-title">📚 隨機分組</div>
-        <div class="row" style="margin-bottom:6px;">
-          <label for="groupSize">每組人數：</label>
-          <input type="number" id="groupSize" min="2" max="8" value="4" style="width: 70px;" />
-          <button class="secondary" id="randomGroupBtn">一鍵隨機分組</button>
-        </div>
-        <div id="groupResult" class="small-text"></div>
-      </div>
-    </section>
-
-    <!-- 小組計分頁 -->
-    <section id="page-groups" class="page">
-      <div class="row">
-        <label for="groupNameInput">小組名稱：</label>
-        <input type="text" id="groupNameInput" placeholder="例如：一組、二組、藍隊…" />
-        <button class="primary" id="addGroupBtn">新增小組</button>
-      </div>
-      <div class="small-text">提示：小組與上面隨機分組互相獨立，你可以自由命名及計分。</div>
-      <div id="groupCards" class="grid" style="margin-top:12px;">
-        <!-- JS 產生 -->
-      </div>
-    </section>
-
-    <!-- 作業訂正頁 -->
-    <section id="page-homework" class="page">
-      <div class="row">
-        <label for="homeworkTitle">作業名稱：</label>
-        <input type="text" id="homeworkTitle" placeholder="例如：單元二詞語工作紙" />
-      </div>
-      <div class="small-text">
-        點擊學生卡片即可切換狀態：
-        <span class="pill hw-not">未繳交</span> →
-        <span class="pill hw-submitted">已繳交</span> →
-        <span class="pill hw-needs">待訂正</span> →
-        <span class="pill hw-done">已訂正</span>
-      </div>
-      <div id="homeworkCards" class="grid" style="margin-top:10px;">
-        <!-- JS 產生 -->
-      </div>
-    </section>
   </div>
 
-  <script>
-    const STORAGE_KEY = "classManager_v3";
-
-    const HOMEWORK_STATES = [
-      { key: "not_submitted", label: "未繳交", className: "hw-not" },
-      { key: "submitted", label: "已繳交", className: "hw-submitted" },
-      { key: "needs_correction", label: "待訂正", className: "hw-needs" },
-      { key: "corrected", label: "已訂正", className: "hw-done" },
-    ];
-
-    let state = {
-      className: "",
-      students: [],  // { id, seatNo, name, score, homeworkStatus }
-      drawPool: [],
-      groups: [],    // { id, name, score }
-      homeworkTitle: ""
-    };
-
-    // --- Local storage ---
-    function loadState() {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return;
-      try {
-        const data = JSON.parse(raw);
-        if (data && Array.isArray(data.students)) {
-          state.className = data.className || "";
-          state.students = data.students.map(s => ({
-            homeworkStatus: "not_submitted", // default if missing
-            ...s
-          }));
-          state.drawPool = Array.isArray(data.drawPool) ? data.drawPool : [];
-          state.groups = Array.isArray(data.groups) ? data.groups : [];
-          state.homeworkTitle = data.homeworkTitle || "";
-        }
-      } catch (e) {
-        console.error("載入資料失敗", e);
-      }
-    }
-
-    function saveState() {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    }
-
-    // --- Rendering ---
-
-    function renderBasics() {
-      const classNameDisplay = document.getElementById("classNameDisplay");
-      const classNameInput = document.getElementById("className");
-      classNameInput.value = state.className || "";
-      classNameDisplay.textContent = state.className || "（未設定班名）";
-
-      // summary
-      let total = 0;
-      state.students.forEach(s => { total += s.score || 0; });
-      document.getElementById("totalScore").textContent = total;
-      document.getElementById("studentCount").textContent = state.students.length;
-
-      // homework title
-      document.getElementById("homeworkTitle").value = state.homeworkTitle || "";
-    }
-
-    function renderStudents() {
-      const container = document.getElementById("studentCards");
-      container.innerHTML = "";
-      const sorted = state.students.slice().sort((a,b) => Number(a.seatNo) - Number(b.seatNo));
-
-      sorted.forEach(stu => {
-        const card = document.createElement("div");
-        card.className = "card";
-
-        const header = document.createElement("div");
-        header.className = "card-header";
-        header.innerHTML = `<span>${stu.seatNo}. ${stu.name}</span>`;
-        card.appendChild(header);
-
-        const scoreDiv = document.createElement("div");
-        scoreDiv.className = "card-score";
-        scoreDiv.textContent = stu.score ?? 0;
-        card.appendChild(scoreDiv);
-
-        const actions = document.createElement("div");
-        actions.className = "card-actions";
-
-        const minusBtn = document.createElement("button");
-        minusBtn.className = "btn-round btn-minus";
-        minusBtn.textContent = "−";
-        minusBtn.onclick = () => changeScore(stu.id, -1);
-
-        const plusBtn = document.createElement("button");
-        plusBtn.className = "btn-round btn-plus";
-        plusBtn.textContent = "+";
-        plusBtn.onclick = () => changeScore(stu.id, 1);
-
-        actions.appendChild(minusBtn);
-        actions.appendChild(plusBtn);
-        card.appendChild(actions);
-
-        container.appendChild(card);
-      });
-
-      renderRanking();
-      renderHomework();
-    }
-
-    function renderRanking() {
-      const rankingList = document.getElementById("rankingList");
-      const rankingWrapper = document.getElementById("rankingWrapper");
-      rankingList.innerHTML = "";
-
-      if (state.students.length === 0) {
-        rankingWrapper.textContent = "尚未加入學生";
-        return;
-      }
-
-      const ranked = state.students.slice().sort((a,b) => (b.score || 0) - (a.score || 0));
-
-      if (ranked[0].score === 0) {
-        rankingWrapper.textContent = "暫時未有分數差距";
-        return;
-      }
-
-      rankingWrapper.textContent = "";
-      ranked.slice(0,5).forEach(stu => {
-        const li = document.createElement("li");
-        li.textContent = `${stu.seatNo}. ${stu.name}（${stu.score}分）`;
-        rankingList.appendChild(li);
-      });
-    }
-
-    function renderHomework() {
-      const container = document.getElementById("homeworkCards");
-      container.innerHTML = "";
-
-      const sorted = state.students.slice().sort((a,b) => Number(a.seatNo) - Number(b.seatNo));
-
-      sorted.forEach(stu => {
-        const card = document.createElement("div");
-        card.className = "card hw-card";
-
-        const header = document.createElement("div");
-        header.className = "card-header";
-        header.innerHTML = `<span>${stu.seatNo}. ${stu.name}</span>`;
-        card.appendChild(header);
-
-        const statusDiv = document.createElement("div");
-        statusDiv.className = "hw-status pill";
-
-        const status = HOMEWORK_STATES.find(s => s.key === stu.homeworkStatus) || HOMEWORK_STATES[0];
-        statusDiv.textContent = status.label;
-        statusDiv.classList.add(status.className);
-
-        card.appendChild(statusDiv);
-
-        card.onclick = () => toggleHomeworkStatus(stu.id);
-
-        container.appendChild(card);
-      });
-    }
-
-    function renderGroups() {
-      const container = document.getElementById("groupCards");
-      container.innerHTML = "";
-
-      if (state.groups.length === 0) {
-        const info = document.createElement("div");
-        info.className = "small-text";
-        info.textContent = "目前未有小組，請先新增。";
-        container.appendChild(info);
-        return;
-      }
-
-      state.groups.forEach(group => {
-        const card = document.createElement("div");
-        card.className = "card";
-
-        const header = document.createElement("div");
-        header.className = "card-header";
-        header.innerHTML = `<span class="group-name">${group.name}</span>`;
-        card.appendChild(header);
-
-        const scoreDiv = document.createElement("div");
-        scoreDiv.className = "group-score";
-        scoreDiv.textContent = group.score ?? 0;
-        card.appendChild(scoreDiv);
-
-        const actions = document.createElement("div");
-        actions.className = "card-actions";
-
-        const minusBtn = document.createElement("button");
-        minusBtn.className = "btn-round btn-minus";
-        minusBtn.textContent = "−";
-        minusBtn.onclick = () => changeGroupScore(group.id, -1);
-
-        const plusBtn = document.createElement("button");
-        plusBtn.className = "btn-round btn-plus";
-        plusBtn.textContent = "+";
-        plusBtn.onclick = () => changeGroupScore(group.id, 1);
-
-        actions.appendChild(minusBtn);
-        actions.appendChild(plusBtn);
-        card.appendChild(actions);
-
-        const delBtn = document.createElement("button");
-        delBtn.className = "danger";
-        delBtn.style.marginTop = "8px";
-        delBtn.textContent = "刪除小組";
-        delBtn.onclick = () => removeGroup(group.id);
-        card.appendChild(delBtn);
-
-        container.appendChild(card);
-      });
-    }
-
-    function renderAll() {
-      renderBasics();
-      renderStudents();
-      renderGroups();
-    }
-
-    // --- Student ops ---
-    function addStudent() {
-      const seatInput = document.getElementById("seatNo");
-      const nameInput = document.getElementById("studentName");
-      const seatNo = seatInput.value.trim();
-      const name = nameInput.value.trim();
-
-      if (!seatNo || !name) {
-        alert("請輸入座號和姓名");
-        return;
-      }
-
-      if (state.students.some(s => String(s.seatNo) === String(seatNo))) {
-        if (!confirm("已經有相同座號，確定要再新增嗎？")) return;
-      }
-
-      const newStudent = {
-        id: Date.now() + Math.random(),
-        seatNo,
-        name,
-        score: 0,
-        homeworkStatus: "not_submitted"
-      };
-
-      state.students.push(newStudent);
-      resetDrawPool(false);
-      saveState();
-      renderAll();
-
-      seatInput.value = "";
-      nameInput.value = "";
-      seatInput.focus();
-    }
-
-    function changeScore(id, delta) {
-      const stu = state.students.find(s => s.id === id);
-      if (!stu) return;
-      stu.score = (stu.score || 0) + delta;
-      saveState();
-      renderAll();
-    }
-
-    // --- Homework ops ---
-    function toggleHomeworkStatus(id) {
-      const stu = state.students.find(s => s.id === id);
-      if (!stu) return;
-      const idx = HOMEWORK_STATES.findIndex(s => s.key === stu.homeworkStatus);
-      const nextIdx = (idx + 1) % HOMEWORK_STATES.length;
-      stu.homeworkStatus = HOMEWORK_STATES[nextIdx].key;
-      saveState();
-      renderHomework();
-    }
-
-    // --- Class name & homework title ---
-    function saveClassName() {
-      const input = document.getElementById("className");
-      state.className = input.value.trim();
-      saveState();
-      renderBasics();
-    }
-
-    document.getElementById("homeworkTitle").addEventListener("input", (e) => {
-      state.homeworkTitle = e.target.value.trim();
-      saveState();
-    });
-
-    // --- Draw pool / random draw ---
-    function resetDrawPool(showMessage = true) {
-      state.drawPool = state.students.map(s => s.id);
-      saveState();
-      if (showMessage) {
-        document.getElementById("drawResult").textContent = "抽籤池已重置，可以重新抽籤。";
-      }
-    }
-
-    function randomDraw() {
-      const drawCountInput = document.getElementById("drawCount");
-      const noRepeatCheckbox = document.getElementById("noRepeatCheckbox");
-      const drawResultDiv = document.getElementById("drawResult");
-
-      let count = Number(drawCountInput.value);
-      if (!count || count < 1) count = 1;
-
-      if (state.students.length === 0) {
-        alert("請先新增學生");
-        return;
-      }
-
-      const noRepeat = noRepeatCheckbox.checked;
-      let selectedStudents = [];
-
-      if (!noRepeat) {
-        for (let i = 0; i < count; i++) {
-          const randomIndex = Math.floor(Math.random() * state.students.length);
-          selectedStudents.push(state.students[randomIndex]);
-        }
-      } else {
-        if (!Array.isArray(state.drawPool) || state.drawPool.length === 0) {
-          resetDrawPool(false);
-        }
-        if (state.drawPool.length === 0) {
-          alert("目前沒有可抽的學生，請重置抽籤池。");
-          return;
-        }
-
-        const pool = [...state.drawPool];
-        selectedStudents = [];
-
-        for (let i = 0; i < count; i++) {
-          if (pool.length === 0) break;
-          const index = Math.floor(Math.random() * pool.length);
-          const id = pool.splice(index, 1)[0];
-          const stu = state.students.find(s => s.id === id);
-          if (stu) selectedStudents.push(stu);
-        }
-
-        state.drawPool = pool;
-        saveState();
-      }
-
-      if (selectedStudents.length === 0) {
-        drawResultDiv.textContent = "暫時無法抽出學生，可能人數不足。";
-        return;
-      }
-
-      const text = selectedStudents
-        .map(s => `${s.seatNo}. ${s.name}（${s.score}分）`)
-        .join("、");
-      drawResultDiv.textContent = `被抽中的同學：${text}`;
-
-      if (noRepeat && state.drawPool.length === 0) {
-        drawResultDiv.textContent += " ｜ 已用完一輪，請按「重置抽籤池」重新開始。";
-      }
-    }
-
-    // --- Random group (by students) ---
-    function randomGroup() {
-      const sizeInput = document.getElementById("groupSize");
-      const resultDiv = document.getElementById("groupResult");
-      const size = Number(sizeInput.value);
-
-      if (!size || size < 2) {
-        alert("請設定每組至少 2 人");
-        return;
-      }
-      if (state.students.length < 2) {
-        alert("學生太少，無法分組");
-        return;
-      }
-
-      const shuffled = [...state.students].sort(() => Math.random() - 0.5);
-      const groups = [];
-      for (let i = 0; i < shuffled.length; i += size) {
-        groups.push(shuffled.slice(i, i + size));
-      }
-
-      let html = "";
-      groups.forEach((group, index) => {
-        const members = group
-          .map(s => `${s.seatNo}. ${s.name}（${s.score}分）`)
-          .join("、");
-        html += `<div>第 ${index + 1} 組：${members}</div>`;
-      });
-      resultDiv.innerHTML = html || "未能分組。";
-    }
-
-    // --- Groups scoring ---
-    function addGroup() {
-      const input = document.getElementById("groupNameInput");
-      const name = input.value.trim();
-      if (!name) {
-        alert("請輸入小組名稱");
-        return;
-      }
-      const newGroup = {
-        id: Date.now() + Math.random(),
-        name,
-        score: 0
-      };
-      state.groups.push(newGroup);
-      saveState();
-      renderGroups();
-      input.value = "";
-      input.focus();
-    }
-
-    function changeGroupScore(id, delta) {
-      const group = state.groups.find(g => g.id === id);
-      if (!group) return;
-      group.score = (group.score || 0) + delta;
-      saveState();
-      renderGroups();
-    }
-
-    function removeGroup(id) {
-      if (!confirm("確定要刪除這個小組？")) return;
-      state.groups = state.groups.filter(g => g.id !== id);
-      saveState();
-      renderGroups();
-    }
-
-    // --- Tabs ---
-    function initTabs() {
-      const tabs = document.querySelectorAll(".tab-button");
-      const pages = document.querySelectorAll(".page");
-      tabs.forEach(btn => {
-        btn.addEventListener("click", () => {
-          const target = btn.dataset.target;
-          tabs.forEach(b => b.classList.remove("active"));
-          btn.classList.add("active");
-          pages.forEach(p => {
-            p.classList.toggle("active", p.id === target);
-          });
-        });
-      });
-    }
-
-    // --- Event bindings ---
-    document.getElementById("addStudentBtn").onclick = addStudent;
-    document.getElementById("saveClassNameBtn").onclick = saveClassName;
-    document.getElementById("randomGroupBtn").onclick = randomGroup;
-    document.getElementById("drawBtn").onclick = randomDraw;
-    document.getElementById("resetDrawPoolBtn").onclick = () => resetDrawPool(true);
-    document.getElementById("addGroupBtn").onclick = addGroup;
-
-    // --- Init ---
-    loadState();
-    initTabs();
-    renderAll();
-  </script>
+  <hr style="margin:24px 0;">
+
+  <!-- 危險區 / 分組排名（Step 2 加） -->
+  <div>
+    <h3>分組排名（Step 2 加）</h3>
+    <div id="groupRanking"></div>
+
+    <h3 style="margin-top:20px;">⚠️ 危險區（今日未得分）</h3>
+    <div id="dangerZone"></div>
+  </div>
+
+</div>
+
+<!-- ========================= -->
+<!--  PAGE 3: 作業訂正頁（骨架） -->
+<!-- ========================= -->
+<div id="page-homework" class="page">
+  <h2>作業訂正（建構中 · Step 2 加功能）</h2>
+
+  <div style="margin-bottom:12px;">
+    <input id="newHomeworkTitle" type="text" placeholder="輸入功課名稱">
+    <button class="btn-primary"
+      onclick="alert('作業功能會在 Step 2 加入！')">
+      ＋ 新增功課
+    </button>
+  </div>
+
+  <div id="homeworkList">
+    <!-- 功課卡片會在 Step 2 加入 -->
+  </div>
+</div>
+
+<!-- ========================= -->
+<!--  NEW STUDENT SECTION      -->
+<!-- ========================= -->
+
+<hr style="margin:30px 0;">
+
+<h2>新增學生</h2>
+
+<div class="card">
+  <div style="display:flex; gap:12px; align-items:center;">
+    <input id="newSeat" type="number" placeholder="座號" style="width:90px;">
+    <input id="newName" type="text" placeholder="姓名">
+    <button class="btn-primary" onclick="addStudent()">新增</button>
+  </div>
+</div>
+
+<!-- ========================= -->
+<!--  HTML END                -->
+<!-- ========================= -->
+
+</div> <!-- container end -->
 </body>
 </html>
-
-
