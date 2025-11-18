@@ -427,5 +427,449 @@
       { key: "not_submitted", label: "未繳交", className: "hw-not" },
       { key: "submitted", label: "已繳交", className: "hw-submitted" },
       { key: "needs_correction", label: "待訂正", className: "hw-needs" },
-      { key: "corrected", label: "已訂正", className: "hw-done"
+      { key: "corrected", label: "已訂正", className: "hw-done" },
+    ];
+
+    let state = {
+      className: "",
+      students: [],  // { id, seatNo, name, score, homeworkStatus }
+      drawPool: [],
+      groups: [],    // { id, name, score }
+      homeworkTitle: ""
+    };
+
+    // --- Local storage ---
+    function loadState() {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return;
+      try {
+        const data = JSON.parse(raw);
+        if (data && Array.isArray(data.students)) {
+          state.className = data.className || "";
+          state.students = data.students.map(s => ({
+            homeworkStatus: "not_submitted", // default if missing
+            ...s
+          }));
+          state.drawPool = Array.isArray(data.drawPool) ? data.drawPool : [];
+          state.groups = Array.isArray(data.groups) ? data.groups : [];
+          state.homeworkTitle = data.homeworkTitle || "";
+        }
+      } catch (e) {
+        console.error("載入資料失敗", e);
+      }
+    }
+
+    function saveState() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+
+    // --- Rendering ---
+
+    function renderBasics() {
+      const classNameDisplay = document.getElementById("classNameDisplay");
+      const classNameInput = document.getElementById("className");
+      classNameInput.value = state.className || "";
+      classNameDisplay.textContent = state.className || "（未設定班名）";
+
+      // summary
+      let total = 0;
+      state.students.forEach(s => { total += s.score || 0; });
+      document.getElementById("totalScore").textContent = total;
+      document.getElementById("studentCount").textContent = state.students.length;
+
+      // homework title
+      document.getElementById("homeworkTitle").value = state.homeworkTitle || "";
+    }
+
+    function renderStudents() {
+      const container = document.getElementById("studentCards");
+      container.innerHTML = "";
+      const sorted = state.students.slice().sort((a,b) => Number(a.seatNo) - Number(b.seatNo));
+
+      sorted.forEach(stu => {
+        const card = document.createElement("div");
+        card.className = "card";
+
+        const header = document.createElement("div");
+        header.className = "card-header";
+        header.innerHTML = `<span>${stu.seatNo}. ${stu.name}</span>`;
+        card.appendChild(header);
+
+        const scoreDiv = document.createElement("div");
+        scoreDiv.className = "card-score";
+        scoreDiv.textContent = stu.score ?? 0;
+        card.appendChild(scoreDiv);
+
+        const actions = document.createElement("div");
+        actions.className = "card-actions";
+
+        const minusBtn = document.createElement("button");
+        minusBtn.className = "btn-round btn-minus";
+        minusBtn.textContent = "−";
+        minusBtn.onclick = () => changeScore(stu.id, -1);
+
+        const plusBtn = document.createElement("button");
+        plusBtn.className = "btn-round btn-plus";
+        plusBtn.textContent = "+";
+        plusBtn.onclick = () => changeScore(stu.id, 1);
+
+        actions.appendChild(minusBtn);
+        actions.appendChild(plusBtn);
+        card.appendChild(actions);
+
+        container.appendChild(card);
+      });
+
+      renderRanking();
+      renderHomework();
+    }
+
+    function renderRanking() {
+      const rankingList = document.getElementById("rankingList");
+      const rankingWrapper = document.getElementById("rankingWrapper");
+      rankingList.innerHTML = "";
+
+      if (state.students.length === 0) {
+        rankingWrapper.textContent = "尚未加入學生";
+        return;
+      }
+
+      const ranked = state.students.slice().sort((a,b) => (b.score || 0) - (a.score || 0));
+
+      if (ranked[0].score === 0) {
+        rankingWrapper.textContent = "暫時未有分數差距";
+        return;
+      }
+
+      rankingWrapper.textContent = "";
+      ranked.slice(0,5).forEach(stu => {
+        const li = document.createElement("li");
+        li.textContent = `${stu.seatNo}. ${stu.name}（${stu.score}分）`;
+        rankingList.appendChild(li);
+      });
+    }
+
+    function renderHomework() {
+      const container = document.getElementById("homeworkCards");
+      container.innerHTML = "";
+
+      const sorted = state.students.slice().sort((a,b) => Number(a.seatNo) - Number(b.seatNo));
+
+      sorted.forEach(stu => {
+        const card = document.createElement("div");
+        card.className = "card hw-card";
+
+        const header = document.createElement("div");
+        header.className = "card-header";
+        header.innerHTML = `<span>${stu.seatNo}. ${stu.name}</span>`;
+        card.appendChild(header);
+
+        const statusDiv = document.createElement("div");
+        statusDiv.className = "hw-status pill";
+
+        const status = HOMEWORK_STATES.find(s => s.key === stu.homeworkStatus) || HOMEWORK_STATES[0];
+        statusDiv.textContent = status.label;
+        statusDiv.classList.add(status.className);
+
+        card.appendChild(statusDiv);
+
+        card.onclick = () => toggleHomeworkStatus(stu.id);
+
+        container.appendChild(card);
+      });
+    }
+
+    function renderGroups() {
+      const container = document.getElementById("groupCards");
+      container.innerHTML = "";
+
+      if (state.groups.length === 0) {
+        const info = document.createElement("div");
+        info.className = "small-text";
+        info.textContent = "目前未有小組，請先新增。";
+        container.appendChild(info);
+        return;
+      }
+
+      state.groups.forEach(group => {
+        const card = document.createElement("div");
+        card.className = "card";
+
+        const header = document.createElement("div");
+        header.className = "card-header";
+        header.innerHTML = `<span class="group-name">${group.name}</span>`;
+        card.appendChild(header);
+
+        const scoreDiv = document.createElement("div");
+        scoreDiv.className = "group-score";
+        scoreDiv.textContent = group.score ?? 0;
+        card.appendChild(scoreDiv);
+
+        const actions = document.createElement("div");
+        actions.className = "card-actions";
+
+        const minusBtn = document.createElement("button");
+        minusBtn.className = "btn-round btn-minus";
+        minusBtn.textContent = "−";
+        minusBtn.onclick = () => changeGroupScore(group.id, -1);
+
+        const plusBtn = document.createElement("button");
+        plusBtn.className = "btn-round btn-plus";
+        plusBtn.textContent = "+";
+        plusBtn.onclick = () => changeGroupScore(group.id, 1);
+
+        actions.appendChild(minusBtn);
+        actions.appendChild(plusBtn);
+        card.appendChild(actions);
+
+        const delBtn = document.createElement("button");
+        delBtn.className = "danger";
+        delBtn.style.marginTop = "8px";
+        delBtn.textContent = "刪除小組";
+        delBtn.onclick = () => removeGroup(group.id);
+        card.appendChild(delBtn);
+
+        container.appendChild(card);
+      });
+    }
+
+    function renderAll() {
+      renderBasics();
+      renderStudents();
+      renderGroups();
+    }
+
+    // --- Student ops ---
+    function addStudent() {
+      const seatInput = document.getElementById("seatNo");
+      const nameInput = document.getElementById("studentName");
+      const seatNo = seatInput.value.trim();
+      const name = nameInput.value.trim();
+
+      if (!seatNo || !name) {
+        alert("請輸入座號和姓名");
+        return;
+      }
+
+      if (state.students.some(s => String(s.seatNo) === String(seatNo))) {
+        if (!confirm("已經有相同座號，確定要再新增嗎？")) return;
+      }
+
+      const newStudent = {
+        id: Date.now() + Math.random(),
+        seatNo,
+        name,
+        score: 0,
+        homeworkStatus: "not_submitted"
+      };
+
+      state.students.push(newStudent);
+      resetDrawPool(false);
+      saveState();
+      renderAll();
+
+      seatInput.value = "";
+      nameInput.value = "";
+      seatInput.focus();
+    }
+
+    function changeScore(id, delta) {
+      const stu = state.students.find(s => s.id === id);
+      if (!stu) return;
+      stu.score = (stu.score || 0) + delta;
+      saveState();
+      renderAll();
+    }
+
+    // --- Homework ops ---
+    function toggleHomeworkStatus(id) {
+      const stu = state.students.find(s => s.id === id);
+      if (!stu) return;
+      const idx = HOMEWORK_STATES.findIndex(s => s.key === stu.homeworkStatus);
+      const nextIdx = (idx + 1) % HOMEWORK_STATES.length;
+      stu.homeworkStatus = HOMEWORK_STATES[nextIdx].key;
+      saveState();
+      renderHomework();
+    }
+
+    // --- Class name & homework title ---
+    function saveClassName() {
+      const input = document.getElementById("className");
+      state.className = input.value.trim();
+      saveState();
+      renderBasics();
+    }
+
+    document.getElementById("homeworkTitle").addEventListener("input", (e) => {
+      state.homeworkTitle = e.target.value.trim();
+      saveState();
+    });
+
+    // --- Draw pool / random draw ---
+    function resetDrawPool(showMessage = true) {
+      state.drawPool = state.students.map(s => s.id);
+      saveState();
+      if (showMessage) {
+        document.getElementById("drawResult").textContent = "抽籤池已重置，可以重新抽籤。";
+      }
+    }
+
+    function randomDraw() {
+      const drawCountInput = document.getElementById("drawCount");
+      const noRepeatCheckbox = document.getElementById("noRepeatCheckbox");
+      const drawResultDiv = document.getElementById("drawResult");
+
+      let count = Number(drawCountInput.value);
+      if (!count || count < 1) count = 1;
+
+      if (state.students.length === 0) {
+        alert("請先新增學生");
+        return;
+      }
+
+      const noRepeat = noRepeatCheckbox.checked;
+      let selectedStudents = [];
+
+      if (!noRepeat) {
+        for (let i = 0; i < count; i++) {
+          const randomIndex = Math.floor(Math.random() * state.students.length);
+          selectedStudents.push(state.students[randomIndex]);
+        }
+      } else {
+        if (!Array.isArray(state.drawPool) || state.drawPool.length === 0) {
+          resetDrawPool(false);
+        }
+        if (state.drawPool.length === 0) {
+          alert("目前沒有可抽的學生，請重置抽籤池。");
+          return;
+        }
+
+        const pool = [...state.drawPool];
+        selectedStudents = [];
+
+        for (let i = 0; i < count; i++) {
+          if (pool.length === 0) break;
+          const index = Math.floor(Math.random() * pool.length);
+          const id = pool.splice(index, 1)[0];
+          const stu = state.students.find(s => s.id === id);
+          if (stu) selectedStudents.push(stu);
+        }
+
+        state.drawPool = pool;
+        saveState();
+      }
+
+      if (selectedStudents.length === 0) {
+        drawResultDiv.textContent = "暫時無法抽出學生，可能人數不足。";
+        return;
+      }
+
+      const text = selectedStudents
+        .map(s => `${s.seatNo}. ${s.name}（${s.score}分）`)
+        .join("、");
+      drawResultDiv.textContent = `被抽中的同學：${text}`;
+
+      if (noRepeat && state.drawPool.length === 0) {
+        drawResultDiv.textContent += " ｜ 已用完一輪，請按「重置抽籤池」重新開始。";
+      }
+    }
+
+    // --- Random group (by students) ---
+    function randomGroup() {
+      const sizeInput = document.getElementById("groupSize");
+      const resultDiv = document.getElementById("groupResult");
+      const size = Number(sizeInput.value);
+
+      if (!size || size < 2) {
+        alert("請設定每組至少 2 人");
+        return;
+      }
+      if (state.students.length < 2) {
+        alert("學生太少，無法分組");
+        return;
+      }
+
+      const shuffled = [...state.students].sort(() => Math.random() - 0.5);
+      const groups = [];
+      for (let i = 0; i < shuffled.length; i += size) {
+        groups.push(shuffled.slice(i, i + size));
+      }
+
+      let html = "";
+      groups.forEach((group, index) => {
+        const members = group
+          .map(s => `${s.seatNo}. ${s.name}（${s.score}分）`)
+          .join("、");
+        html += `<div>第 ${index + 1} 組：${members}</div>`;
+      });
+      resultDiv.innerHTML = html || "未能分組。";
+    }
+
+    // --- Groups scoring ---
+    function addGroup() {
+      const input = document.getElementById("groupNameInput");
+      const name = input.value.trim();
+      if (!name) {
+        alert("請輸入小組名稱");
+        return;
+      }
+      const newGroup = {
+        id: Date.now() + Math.random(),
+        name,
+        score: 0
+      };
+      state.groups.push(newGroup);
+      saveState();
+      renderGroups();
+      input.value = "";
+      input.focus();
+    }
+
+    function changeGroupScore(id, delta) {
+      const group = state.groups.find(g => g.id === id);
+      if (!group) return;
+      group.score = (group.score || 0) + delta;
+      saveState();
+      renderGroups();
+    }
+
+    function removeGroup(id) {
+      if (!confirm("確定要刪除這個小組？")) return;
+      state.groups = state.groups.filter(g => g.id !== id);
+      saveState();
+      renderGroups();
+    }
+
+    // --- Tabs ---
+    function initTabs() {
+      const tabs = document.querySelectorAll(".tab-button");
+      const pages = document.querySelectorAll(".page");
+      tabs.forEach(btn => {
+        btn.addEventListener("click", () => {
+          const target = btn.dataset.target;
+          tabs.forEach(b => b.classList.remove("active"));
+          btn.classList.add("active");
+          pages.forEach(p => {
+            p.classList.toggle("active", p.id === target);
+          });
+        });
+      });
+    }
+
+    // --- Event bindings ---
+    document.getElementById("addStudentBtn").onclick = addStudent;
+    document.getElementById("saveClassNameBtn").onclick = saveClassName;
+    document.getElementById("randomGroupBtn").onclick = randomGroup;
+    document.getElementById("drawBtn").onclick = randomDraw;
+    document.getElementById("resetDrawPoolBtn").onclick = () => resetDrawPool(true);
+    document.getElementById("addGroupBtn").onclick = addGroup;
+
+    // --- Init ---
+    loadState();
+    initTabs();
+    renderAll();
+  </script>
+</body>
+</html>
+
 
