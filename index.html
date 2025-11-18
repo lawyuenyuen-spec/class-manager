@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <title>6C 班級經營小幫手</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      margin: 0;
+      padding: 16px;
+      background: #f5f5f5;
+    }
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      background: #ffffff;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+    h1 {
+      margin-top: 0;
+      text-align: center;
+    }
+    .row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 12px;
+      align-items: center;
+    }
+    label {
+      font-size: 14px;
+      margin-right: 4px;
+    }
+    input[type="text"],
+    input[type="number"] {
+      padding: 6px 8px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      font-size: 14px;
+    }
+    button {
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: none;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    button.primary {
+      background: #2563eb;
+      color: white;
+    }
+    button.secondary {
+      background: #e5e7eb;
+      color: #111827;
+    }
+    button.danger {
+      background: #ef4444;
+      color: white;
+    }
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+    }
+    th, td {
+      border-bottom: 1px solid #e5e7eb;
+      padding: 8px;
+      text-align: center;
+      font-size: 14px;
+    }
+    th {
+      background: #f9fafb;
+      font-weight: 600;
+    }
+    .score {
+      font-weight: 600;
+    }
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: #e0f2fe;
+      color: #0369a1;
+      font-size: 12px;
+    }
+    .card {
+      border-radius: 10px;
+      background: #f9fafb;
+      padding: 10px 12px;
+      margin-top: 12px;
+      font-size: 14px;
+    }
+    .group-box {
+      margin-top: 8px;
+      padding: 8px;
+      border-radius: 8px;
+      background: #f3f4f6;
+      font-size: 13px;
+    }
+    .small-tip {
+      font-size: 12px;
+      color: #6b7280;
+      margin-top: 4px;
+    }
+    ol {
+      padding-left: 20px;
+      margin: 6px 0 0 0;
+    }
+    @media (max-width: 600px) {
+      th, td { font-size: 12px; }
+      button { font-size: 12px; padding: 4px 8px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>6C 班級經營小幫手</h1>
+
+    <!-- 班級設定 -->
+    <div class="row">
+      <label for="className">班級名稱：</label>
+      <input type="text" id="className" placeholder="例如：6C 勤學班" />
+      <button class="secondary" id="saveClassNameBtn">儲存班名</button>
+      <span class="badge" id="classNameDisplay"></span>
+    </div>
+
+    <!-- 新增學生 -->
+    <div class="row">
+      <label for="seatNo">座號：</label>
+      <input type="number" id="seatNo" min="1" style="width: 70px;" />
+      <label for="studentName">姓名：</label>
+      <input type="text" id="studentName" placeholder="學生姓名" />
+      <button class="primary" id="addStudentBtn">新增學生</button>
+    </div>
+
+    <!-- 總覽 -->
+    <div class="card">
+      👀 班級總分：<span id="totalScore">0</span> 分  
+      | 學生人數：<span id="studentCount">0</span> 人
+    </div>
+
+    <!-- 排行榜 -->
+    <div class="card">
+      <strong>🏆 排行榜（前 5 名）</strong>
+      <div id="rankingWrapper" class="small-tip">暫時未有分數差距</div>
+      <ol id="rankingList"></ol>
+    </div>
+
+    <!-- 隨機抽籤 -->
+    <div class="card">
+      <div class="row">
+        <label for="drawCount">抽出人數：</label>
+        <input type="number" id="drawCount" min="1" value="1" style="width: 70px;" />
+        <label style="display:flex;align-items:center;font-size:13px;">
+          <input type="checkbox" id="noRepeatCheckbox" checked style="margin-right:4px;" />
+          不重複抽籤（用完一輪先重置）
+        </label>
+        <button class="secondary" id="drawBtn">🎲 抽籤</button>
+        <button class="danger" id="resetDrawPoolBtn">重置抽籤池</button>
+      </div>
+      <div id="drawResult" class="group-box">尚未抽籤</div>
+      <div class="small-tip">
+        提示：不重複模式下，系統會用完每位同學一次，先會重新開始。
+      </div>
+    </div>
+
+    <!-- 隨機分組 -->
+    <div class="card">
+      <div class="row">
+        <label for="groupSize">每組人數：</label>
+        <input type="number" id="groupSize" min="2" max="8" value="4" style="width: 70px;" />
+        <button class="secondary" id="randomGroupBtn">📚 一鍵隨機分組</button>
+      </div>
+      <div id="groupResult" class="group-box"></div>
+    </div>
+
+    <!-- 學生表格 -->
+    <table>
+      <thead>
+        <tr>
+          <th>座號</th>
+          <th>姓名</th>
+          <th>分數</th>
+          <th>操作</th>
+          <th>移除</th>
+        </tr>
+      </thead>
+      <tbody id="studentTableBody">
+        <!-- JS 產生 -->
+      </tbody>
+    </table>
+  </div>
+
+  <script>
+    const STORAGE_KEY = "classManager6C";
+
+    let state = {
+      className: "",
+      students: [],  // { id, seatNo, name, score }
+      drawPool: []   // 存住未被抽過的學生 id（不重複抽籤用）
+    };
+
+    // 讀取 localStorage
+    function loadState() {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return;
+      try {
+        const data = JSON.parse(raw);
+        if (data && Array.isArray(data.students)) {
+          state.className = data.className || "";
+          state.students = data.students;
+          state.drawPool = Array.isArray(data.drawPool) ? data.drawPool : [];
+        }
+      } catch (e) {
+        console.error("載入資料失敗", e);
+      }
+    }
+
+    // 儲存到 localStorage
+    function saveState() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+
+    function render() {
+      // 班名
+      const classNameDisplay = document.getElementById("classNameDisplay");
+      const classNameInput = document.getElementById("className");
+      classNameInput.value = state.className || "";
+      classNameDisplay.textContent = state.className || "（未設定班名）";
+
+      // 學生表格
+      const tbody = document.getElementById("studentTableBody");
+      tbody.innerHTML = "";
+
+      let total = 0;
+      state.students
+        .slice()
+        .sort((a, b) => Number(a.seatNo) - Number(b.seatNo))
+        .forEach((stu) => {
+        total += stu.score;
+        const tr = document.createElement("tr");
+
+        const tdSeat = document.createElement("td");
+        tdSeat.textContent = stu.seatNo;
+        tr.appendChild(tdSeat);
+
+        const tdName = document.createElement("td");
+        tdName.textContent = stu.name;
+        tr.appendChild(tdName);
+
+        const tdScore = document.createElement("td");
+        tdScore.innerHTML = `<span class="score">${stu.score}</span>`;
+        tr.appendChild(tdScore);
+
+        const tdActions = document.createElement("td");
+        const plusBtn = document.createElement("button");
+        plusBtn.textContent = "+1";
+        plusBtn.className = "primary";
+        plusBtn.onclick = () => changeScore(stu.id, 1);
+
+        const minusBtn = document.createElement("button");
+        minusBtn.textContent = "-1";
+        minusBtn.className = "secondary";
+        minusBtn.style.marginLeft = "4px";
+        minusBtn.onclick = () => changeScore(stu.id, -1);
+
+        tdActions.appendChild(plusBtn);
+        tdActions.appendChild(minusBtn);
+        tr.appendChild(tdActions);
+
+        const tdRemove = document.createElement("td");
+        const delBtn = document.createElement("button");
+        delBtn.textContent = "刪除";
+        delBtn.className = "danger";
+        delBtn.onclick = () => removeStudent(stu.id);
+        tdRemove.appendChild(delBtn);
+        tr.appendChild(tdRemove);
+
+        tbody.appendChild(tr);
+      });
+
+      // 總分／人數
+      document.getElementById("totalScore").textContent = total;
+      document.getElementById("studentCount").textContent = state.students.length;
+
+      renderRanking();
+    }
+
+    // 排行榜
+    function renderRanking() {
+      const rankingList = document.getElementById("rankingList");
+      const rankingWrapper = document.getElementById("rankingWrapper");
+      rankingList.innerHTML = "";
+
+      if (state.students.length === 0) {
+        rankingWrapper.textContent = "尚未加入學生";
+        return;
+      }
+
+      const ranked = state.students
+        .slice()
+        .sort((a, b) => b.score - a.score);
+
+      if (ranked.length === 0 || ranked[0].score === 0) {
+        rankingWrapper.textContent = "暫時未有分數差距";
+        return;
+      }
+
+      rankingWrapper.textContent = "";
+      ranked.slice(0, 5).forEach((stu, index) => {
+        const li = document.createElement("li");
+        li.textContent = `${stu.seatNo}.${stu.name}（${stu.score}分）`;
+        rankingList.appendChild(li);
+      });
+    }
+
+    function addStudent() {
+      const seatInput = document.getElementById("seatNo");
+      const nameInput = document.getElementById("studentName");
+      const seatNo = seatInput.value.trim();
+      const name = nameInput.value.trim();
+
+      if (!seatNo || !name) {
+        alert("請輸入座號和姓名");
+        return;
+      }
+
+      // 檢查重複座號
+      if (state.students.some((s) => String(s.seatNo) === String(seatNo))) {
+        if (!confirm("已經有相同座號，確定要再新增嗎？")) return;
+      }
+
+      const newStudent = {
+        id: Date.now() + Math.random(),
+        seatNo,
+        name,
+        score: 0
+      };
+      state.students.push(newStudent);
+
+      // 每次改動學生名單，就重置抽籤池
+      resetDrawPool(false);
+
+      saveState();
+      render();
+
+      seatInput.value = "";
+      nameInput.value = "";
+      seatInput.focus();
+    }
+
+    function changeScore(id, delta) {
+      const stu = state.students.find((s) => s.id === id);
+      if (!stu) return;
+      stu.score += delta;
+      saveState();
+      render();
+    }
+
+    function removeStudent(id) {
+      if (!confirm("確定要刪除這位學生？")) return;
+      state.students = state.students.filter((s) => s.id !== id);
+      resetDrawPool(false);
+      saveState();
+      render();
+    }
+
+    function saveClassName() {
+      const input = document.getElementById("className");
+      state.className = input.value.trim();
+      saveState();
+      render();
+    }
+
+    // 初始化／重置抽籤池
+    function resetDrawPool(showMessage = true) {
+      state.drawPool = state.students.map((s) => s.id);
+      saveState();
+      if (showMessage) {
+        document.getElementById("drawResult").textContent = "抽籤池已重置，可以重新抽籤。";
+      }
+    }
+
+    // 隨機抽籤
+    function randomDraw() {
+      const drawCountInput = document.getElementById("drawCount");
+      const noRepeatCheckbox = document.getElementById("noRepeatCheckbox");
+      const drawResultDiv = document.getElementById("drawResult");
+
+      let count = Number(drawCountInput.value);
+      if (!count || count < 1) count = 1;
+
+      if (state.students.length === 0) {
+        alert("請先新增學生");
+        return;
+      }
+
+      const noRepeat = noRepeatCheckbox.checked;
+
+      let selectedStudents = [];
+
+      if (!noRepeat) {
+        // 允許重複：每次從所有學生中抽
+        for (let i = 0; i < count; i++) {
+          const randomIndex = Math.floor(Math.random() * state.students.length);
+          selectedStudents.push(state.students[randomIndex]);
+        }
+      } else {
+        // 不重複抽籤：用 drawPool
+        if (!Array.isArray(state.drawPool) || state.drawPool.length === 0) {
+          // 如果抽籤池空，重新建立
+          resetDrawPool(false);
+        }
+
+        if (state.drawPool.length === 0) {
+          alert("目前沒有可抽的學生，請重置抽籤池。");
+          return;
+        }
+
+        const pool = [...state.drawPool];
+        selectedStudents = [];
+
+        for (let i = 0; i < count; i++) {
+          if (pool.length === 0) break;
+          const index = Math.floor(Math.random() * pool.length);
+          const id = pool.splice(index, 1)[0];
+          const stu = state.students.find((s) => s.id === id);
+          if (stu) selectedStudents.push(stu);
+        }
+
+        state.drawPool = pool;
+        saveState();
+      }
+
+      if (selectedStudents.length === 0) {
+        drawResultDiv.textContent = "暫時無法抽出學生，可能人數不足。";
+        return;
+      }
+
+      const text = selectedStudents
+        .map((s) => `${s.seatNo}.${s.name}（${s.score}分）`)
+        .join("、");
+
+      drawResultDiv.textContent = `被抽中的同學：${text}`;
+
+      if (noRepeat && state.drawPool.length === 0) {
+        drawResultDiv.textContent += " ｜ 已用完一輪，請按「重置抽籤池」重新開始。";
+      }
+    }
+
+    // 隨機分組
+    function randomGroup() {
+      const sizeInput = document.getElementById("groupSize");
+      const resultDiv = document.getElementById("groupResult");
+      const size = Number(sizeInput.value);
+
+      if (!size || size < 2) {
+        alert("請設定每組至少 2 人");
+        return;
+      }
+      if (state.students.length < 2) {
+        alert("學生太少，無法分組");
+        return;
+      }
+
+      const shuffled = [...state.students].sort(() => Math.random() - 0.5);
+      const groups = [];
+      for (let i = 0; i < shuffled.length; i += size) {
+        groups.push(shuffled.slice(i, i + size));
+      }
+
+      let html = "";
+      groups.forEach((group, index) => {
+        const members = group
+          .map((s) => `${s.seatNo}.${s.name}（${s.score}分）`)
+          .join("、");
+        html += `<div>第 ${index + 1} 組：${members}</div>`;
+      });
+      resultDiv.innerHTML = html;
+    }
+
+    // 綁定事件
+    document.getElementById("addStudentBtn").onclick = addStudent;
+    document.getElementById("saveClassNameBtn").onclick = saveClassName;
+    document.getElementById("randomGroupBtn").onclick = randomGroup;
+    document.getElementById("drawBtn").onclick = randomDraw;
+    document.getElementById("resetDrawPoolBtn").onclick = () => resetDrawPool(true);
+
+    // 初始化
+    loadState();
+    render();
+  </script>
+</body>
+</html>
