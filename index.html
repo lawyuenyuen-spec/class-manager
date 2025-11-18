@@ -197,6 +197,116 @@
     <button class="tab-btn" data-page="page-group">小組計分</button>
     <button class="tab-btn" data-page="page-homework">作業訂正</button>
   </div>
+
+  <!-- ========================= -->
+  <!--  PAGE 1: 個人計分頁        -->
+  <!-- ========================= -->
+  <div id="page-individual" class="page active">
+    <h2>個人計分</h2>
+    <div id="individualList" class="student-list"></div>
+  </div>
+
+  <!-- ========================= -->
+  <!--  PAGE 2: 小組計分頁       -->
+  <!-- ========================= -->
+  <div id="page-group" class="page">
+
+    <h2>小組計分</h2>
+
+    <p style="color:#555;">
+      ➤ 左邊：未分組學生（可拖曳）<br>
+      ➤ 右邊：小組（可拖曳學生進入）<br>
+      ➤ 每個組都有：組員個人 +/−、自動組分、結算按鈕<br>
+    </p>
+
+    <div class="group-section">
+
+      <!-- 左側：未分組學生 -->
+      <div class="group-col">
+        <h3>未分組學生</h3>
+
+        <div id="ungroupedList" class="student-list">
+          <!-- 由 JS 渲染 -->
+        </div>
+      </div>
+
+      <!-- 右側：小組列表 -->
+      <div class="group-col">
+        <h3>小組列表</h3>
+
+        <button class="btn-primary" onclick="addGroup()">
+          ＋ 新增小組
+        </button>
+
+        <div id="groupList" style="margin-top:12px;">
+          <!-- JS 生成組卡 -->
+        </div>
+      </div>
+
+    </div>
+
+    <hr style="margin:24px 0;">
+
+    <!-- 排名 & 危險區 -->
+    <h3>🏆 分組排名</h3>
+    <div id="groupRanking"></div>
+
+    <h3 style="margin-top:20px;">⚠️ 危險區（今日 0 分）</h3>
+    <div id="dangerZone"></div>
+
+  </div>
+
+  <!-- ========================= -->
+  <!--  PAGE 3: 作業訂正頁       -->
+  <!-- ========================= -->
+  <div id="page-homework" class="page">
+
+    <h2>作業訂正</h2>
+
+    <p style="color:#555;">
+      ➤ 下版本 Step 3 會加入：新增功課、學生狀態切換、準時交 +1、過濾器功能<br>
+      ➤ 以下是已準備好的框架（可正常顯示）
+    </p>
+
+    <!-- 新增功課 -->
+    <div style="margin-bottom:12px;">
+      <input id="newHomeworkTitle" type="text" placeholder="輸入功課名稱">
+      <button class="btn-primary" onclick="alert('Step 3 才會加入完整作業邏輯')">
+        ＋ 新增功課
+      </button>
+    </div>
+
+    <!-- 作業列表 -->
+    <div id="homeworkList">
+      <!-- Step 3 會由 JS 自動渲染功課卡 -->
+      <div class="hw-card" style="color:#777;">
+        （Step 3 會啟動作業頁完整功能）
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ========================= -->
+  <!--  NEW STUDENT SECTION      -->
+  <!-- ========================= -->
+
+  <hr style="margin:30px 0;">
+
+  <h2>新增學生</h2>
+
+  <div class="card">
+    <div style="display:flex; gap:12px; align-items:center;">
+      <input id="newSeat" type="number" placeholder="座號" style="width:90px;">
+      <input id="newName" type="text" placeholder="姓名">
+      <button class="btn-primary" onclick="addStudent()">新增</button>
+    </div>
+  </div>
+
+</div> <!-- container END -->
+
+<!-- ========================= -->
+<!--  SCRIPT: 核心邏輯         -->
+<!-- ========================= -->
 <script>
 /* ===========================================================
    🧠  STATE：資料模型（所有資料都存放在這）
@@ -205,11 +315,9 @@ let state = {
   students: [
     // { id, seat, name, totalScore, individualGroupScoreToday }
   ],
-
   groups: [
     // { id, name, memberIds: [], groupScore }
   ],
-
   homeworks: [
     // reserved for Step 3
   ]
@@ -293,7 +401,7 @@ function redeemCard(id) {
 }
 
 /* ===========================================================
-   👤 個人計分頁：渲染（已修正＋加入 編輯/刪除）
+   👤 個人計分頁：渲染
    =========================================================== */
 function renderIndividualPage() {
   const container = document.getElementById("individualList");
@@ -337,51 +445,7 @@ function renderIndividualPage() {
     container.appendChild(card);
   });
 }
-/* ===========================================================
-   👤 個人計分頁：渲染（已修正、乾淨）
-   =========================================================== */
-function renderIndividualPage() {
-  const container = document.getElementById("individualList");
-  container.innerHTML = "";
 
-  const sorted = [...state.students].sort((a, b) => Number(a.seat) - Number(b.seat));
-
-  sorted.forEach(stu => {
-    const card = document.createElement("div");
-    card.className = "student-card";
-
-    card.innerHTML = `
-      <div class="between">
-        <strong>${stu.seat}. ${stu.name}</strong>
-
-        <div style="display:flex; gap:6px; align-items:center;">
-          <div class="score-num">${stu.totalScore}</div>
-
-          <button class="btn-secondary" style="padding:4px 8px;font-size:12px;"
-            onclick="editStudent(${stu.id})">
-            編輯
-          </button>
-
-          <button class="btn-danger" style="padding:4px 8px;font-size:12px;"
-            onclick="deleteStudent(${stu.id})">
-            刪除
-          </button>
-        </div>
-      </div>
-
-      <div class="between" style="margin-top:6px;">
-        <button class="minus-btn" onclick="changePersonalScore(${stu.id}, -1)">−</button>
-        <button class="plus-btn" onclick="changePersonalScore(${stu.id}, +1)">+</button>
-      </div>
-
-      <button class="redeem-btn" onclick="redeemCard(${stu.id})">
-        兌換一張卡（-5分）
-      </button>
-    `;
-
-    container.appendChild(card);
-  });
-}
 /* ===========================================================
    ✏️ 編輯學生（座號 + 名字）
    =========================================================== */
@@ -406,26 +470,30 @@ function editStudent(id) {
   renderDangerZone();
 }
 
-  </div>
+/* ===========================================================
+   🗑️ 刪除學生
+   =========================================================== */
+function deleteStudent(id) {
+  if (!confirm("確定要刪除這位學生？")) return;
 
-  <div class="between" style="margin-top:6px;">
-    <button class="minus-btn" onclick="changePersonalScore(${stu.id}, -1)">−</button>
-    <button class="plus-btn" onclick="changePersonalScore(${stu.id}, +1)">+</button>
-  </div>
+  // 刪除學生
+  state.students = state.students.filter(s => s.id !== id);
 
-  <button class="redeem-btn" onclick="redeemCard(${stu.id})">
-    兌換一張卡（-5分）
-  </button>
-`;
-
-    `;
-
-    container.appendChild(card);
+  // 從所有小組移除
+  state.groups.forEach(g => {
+    g.memberIds = g.memberIds.filter(sid => sid !== id);
   });
+
+  saveState();
+
+  renderIndividualPage();
+  renderGroups();
+  renderGroupRanking();
+  renderDangerZone();
 }
 
 /* ===========================================================
-   🗂️ Tabs 切換
+   🟂 Tabs 切換
    =========================================================== */
 function initTabs() {
   const tabs = document.querySelectorAll(".tab-btn");
@@ -435,28 +503,20 @@ function initTabs() {
     btn.addEventListener("click", () => {
       const target = btn.dataset.page;
 
-      // Tab active 狀態
       tabs.forEach(b => b.classList.remove("active"));
       btn.classList.add("active");
 
-      // Page active 狀態
       pages.forEach(p => {
         p.classList.toggle("active", p.id === target);
       });
     });
   });
 }
-
-/* ===========================================================
-   🚀 INIT
-   =========================================================== */
-loadState();
-
-document.addEventListener("DOMContentLoaded", () => {
-  initTabs();
-  renderIndividualPage();
-});
 </script>
+
+<!-- ========================= -->
+<!--  SCRIPT: 小組邏輯         -->
+<!-- ========================= -->
 <script>
 /* ===========================================================
    🟦 新增小組
@@ -481,6 +541,8 @@ function addGroup() {
 function renderGroups() {
   const box = document.getElementById("groupList");
   const ungroupedBox = document.getElementById("ungroupedList");
+
+  if (!box || !ungroupedBox) return;
 
   box.innerHTML = "";
   ungroupedBox.innerHTML = "";
@@ -527,7 +589,7 @@ function makeGroupCard(group) {
   div.className = "group-card";
   div.dataset.gid = group.id;
 
-  // 計算組分
+  // 計算組分（組內個人今日分相加）
   group.groupScore = group.memberIds
     .map(id => state.students.find(s => s.id === id)?.individualGroupScoreToday || 0)
     .reduce((a, b) => a + b, 0);
@@ -560,6 +622,7 @@ function renderGroupMembers(group) {
   let html = "";
   const members = group.memberIds
     .map(id => state.students.find(s => s.id === id))
+    .filter(Boolean)
     .sort((a, b) => Number(a.seat) - Number(b.seat));
 
   members.forEach(stu => {
@@ -614,6 +677,7 @@ function enableDrag() {
   });
 
   const ungrouped = document.getElementById("ungroupedList");
+  if (!ungrouped) return;
   ungrouped.addEventListener("dragover", e => e.preventDefault());
   ungrouped.addEventListener("drop", e => {
     const sid = Number(e.dataTransfer.getData("sid"));
@@ -629,6 +693,7 @@ function moveStudentToGroup(sid, gid) {
     g.memberIds = g.memberIds.filter(id => id !== sid);
   });
   const group = state.groups.find(g => g.id === gid);
+  if (!group) return;
   group.memberIds.push(sid);
 
   saveState();
@@ -687,6 +752,7 @@ function settleGroup(gid) {
 
   g.memberIds.forEach(id => {
     const stu = state.students.find(s => s.id === id);
+    if (!stu) return;
     stu.totalScore += score;
     stu.individualGroupScoreToday = 0;
   });
@@ -705,6 +771,7 @@ function settleGroup(gid) {
    =========================================================== */
 function renderDangerZone() {
   const box = document.getElementById("dangerZone");
+  if (!box) return;
   box.innerHTML = "";
 
   const zero = state.students.filter(s => s.individualGroupScoreToday === 0);
@@ -721,6 +788,7 @@ function renderDangerZone() {
    =========================================================== */
 function renderGroupRanking() {
   const box = document.getElementById("groupRanking");
+  if (!box) return;
   box.innerHTML = "";
 
   const rank = [...state.groups]
@@ -738,102 +806,20 @@ function renderGroupRanking() {
     box.appendChild(div);
   });
 }
+
+/* ===========================================================
+   🚀 INIT
+   =========================================================== */
+loadState();
+
+document.addEventListener("DOMContentLoaded", () => {
+  initTabs();
+  renderIndividualPage();
+  renderGroups();
+  renderGroupRanking();
+  renderDangerZone();
+});
 </script>
-<!-- ========================= -->
-<!--  PAGE 2: 小組計分頁（完整功能） -->
-<!-- ========================= -->
-<div id="page-group" class="page">
-
-  <h2>小組計分</h2>
-
-  <p style="color:#555;">
-    ➤ 左邊：未分組學生（可拖曳）<br>
-    ➤ 右邊：小組（可拖曳學生進入）<br>
-    ➤ 每個組都有：組員個人 +/−、自動組分、結算按鈕<br>
-  </p>
-
-  <div class="group-section">
-
-    <!-- 左側：未分組學生 -->
-    <div class="group-col">
-      <h3>未分組學生</h3>
-
-      <div id="ungroupedList" class="student-list">
-        <!-- 由 JS 渲染 -->
-      </div>
-    </div>
-
-    <!-- 右側：小組列表 -->
-    <div class="group-col">
-      <h3>小組列表</h3>
-
-      <button class="btn-primary" onclick="addGroup()">
-        ＋ 新增小組
-      </button>
-
-      <div id="groupList" style="margin-top:12px;">
-        <!-- JS 生成組卡 -->
-      </div>
-    </div>
-
-  </div>
-
-  <hr style="margin:24px 0;">
-
-  <!-- 排名 & 危險區 -->
-  <h3>🏆 分組排名</h3>
-  <div id="groupRanking"></div>
-
-  <h3 style="margin-top:20px;">⚠️ 危險區（今日 0 分）</h3>
-  <div id="dangerZone"></div>
-
-</div>
-<!-- ========================= -->
-<!--  PAGE 3: 作業訂正頁（完整框架） -->
-<!-- ========================= -->
-<div id="page-homework" class="page">
-
-  <h2>作業訂正</h2>
-
-  <p style="color:#555;">
-    ➤ 下版本 Step 3 會加入：新增功課、學生狀態切換、準時交 +1、過濾器功能<br>
-    ➤ 以下是已準備好的框架（可正常顯示）
-  </p>
-
-  <!-- 新增功課 -->
-  <div style="margin-bottom:12px;">
-    <input id="newHomeworkTitle" type="text" placeholder="輸入功課名稱">
-    <button class="btn-primary" onclick="alert('Step 3 才會加入完整作業邏輯')">
-      ＋ 新增功課
-    </button>
-  </div>
-
-  <!-- 作業列表 -->
-  <div id="homeworkList">
-    <!-- Step 3 會由 JS 自動渲染功課卡 -->
-    <div class="hw-card" style="color:#777;">
-      （Step 3 會啟動作業頁完整功能）
-    </div>
-  </div>
-
-</div>
-<!-- ========================= -->
-<!--  NEW STUDENT SECTION      -->
-<!-- ========================= -->
-
-<hr style="margin:30px 0;">
-
-<h2>新增學生</h2>
-
-<div class="card">
-  <div style="display:flex; gap:12px; align-items:center;">
-    <input id="newSeat" type="number" placeholder="座號" style="width:90px;">
-    <input id="newName" type="text" placeholder="姓名">
-    <button class="btn-primary" onclick="addStudent()">新增</button>
-  </div>
-</div>
-
-</div> <!-- container END -->
 
 </body>
 </html>
