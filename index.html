@@ -125,8 +125,13 @@
       cursor: pointer;
     }
 
-    .plus-btn { background:#16a34a; }
-    .minus-btn { background:#dc2626; }
+    .plus-btn {
+      background:#16a34a;
+    }
+
+    .minus-btn {
+      background:#dc2626;
+    }
 
     .edit-btn   { font-size: 20px; cursor: pointer; margin-right: 4px; }
     .delete-btn { font-size: 20px; cursor: pointer; color: #dc2626; }
@@ -209,8 +214,28 @@
       font-size: 12px;
       border-radius: 6px;
       cursor: pointer;
-      background: #e5e7eb;
       border: none;
+    }
+
+    /* 作業狀態顏色 */
+    .status-btn.status-未繳交 {
+      background: #d1d5db;
+      color: #444;
+    }
+
+    .status-btn.status-已繳交 {
+      background: #3b82f6;
+      color: white;
+    }
+
+    .status-btn.status-待訂正 {
+      background: #f97316;
+      color: white;
+    }
+
+    .status-btn.status-已訂正 {
+      background: #16a34a;
+      color: white;
     }
 
     .modal-footer {
@@ -276,7 +301,7 @@
 
       <div class="group-col">
         <h3>小組列表</h3>
-        <button class="btn-primary" onclick="addGroup()">＋ 新增小組</button>
+        <button class="btn-primary" onclick="addGroup()">＋ 新小組</button>
         <div id="groupList" style="margin-top:12px;"></div>
       </div>
     </div>
@@ -326,7 +351,7 @@ let state = {
   homeworks: []
 };
 
-const STORAGE_KEY = "class_manager_v7";
+const STORAGE_KEY = "class_manager_v6";
 
 function loadState() {
   const saved = localStorage.getItem(STORAGE_KEY);
@@ -461,6 +486,7 @@ function renderIndividual() {
       <div class="between">
         <strong>${stu.seat}. ${stu.name}</strong>
         <div style="display:flex;align-items:center;">
+          <span class="score-num">${stu.totalScore}</span>
           <span class="edit-btn" onclick="editStudent(${stu.id})">✏️</span>
           <span class="delete-btn" onclick="deleteStudent(${stu.id})">❌</span>
         </div>
@@ -793,7 +819,7 @@ function openHomework(id) {
            onclick="toggleCheck(${stu.id})"></div>
       <strong>${stu.seat}. ${stu.name}</strong>
       <br>
-      <button class="status-btn" onclick="changeHWStatus(${stu.id})">
+      <button class="status-btn status-${status}" onclick="changeHWStatus(${stu.id})">
         ${status}
       </button>
     `;
@@ -854,7 +880,7 @@ function awardOnTime() {
   saveState();
   renderIndividual();
   renderHomeworkList();
-  openHomework(currentHW.id); // 令畫面更新，已派獎勵的圈會保持藍色但不可再按
+  openHomework(currentHW.id); // 令畫面更新
 }
 
 function deleteHomework() {
