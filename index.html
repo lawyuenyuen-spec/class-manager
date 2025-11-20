@@ -498,9 +498,9 @@ function renderIndividual() {
       </div>
 
       <div style="display:flex;justify-content:center;align-items:center;gap:10px;margin-top:6px;">
-        <button class="plus-btn" onclick="changePersonalScore(${stu.id}, 1)">＋</button>
-        <span class="score-num">${stu.totalScore}</span>
         <button class="minus-btn" onclick="changePersonalScore(${stu.id}, -1)">−</button>
+        <span class="score-num">${stu.totalScore}</span>
+        <button class="plus-btn" onclick="changePersonalScore(${stu.id}, 1)">＋</button>
       </div>
 
       <button class="btn-primary" style="margin-top:6px;width:100%;border-radius:8px;"
@@ -567,15 +567,15 @@ function renderGroups() {
     <span>${stu.seat}. ${stu.name}</span>
 
     <div class="group-edit-row">
-      <button class="plus-btn" style="width:28px;height:28px;font-size:18px;"
-        onclick="changeGroupMemberScore(${stu.id},1)">＋</button>
+      <button class="minus-btn" style="width:28px;height:28px;font-size:18px;"
+        onclick="changeGroupMemberScore(${stu.id},-1)">−</button>
 
       <strong style="font-size:18px;width:20px;text-align:center;">
         ${stu.individualGroupScoreToday}
       </strong>
 
-      <button class="minus-btn" style="width:28px;height:28px;font-size:18px;"
-        onclick="changeGroupMemberScore(${stu.id},-1)">−</button>
+      <button class="plus-btn" style="width:28px;height:28px;font-size:18px;"
+        onclick="changeGroupMemberScore(${stu.id},1)">＋</button>
     </div>
   </div>
 `;
