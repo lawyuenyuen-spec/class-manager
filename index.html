@@ -111,27 +111,22 @@
       margin: 0 6px;
     }
 
- .plus-btn, .minus-btn {
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    font-size: 22px;
-    font-weight: bold;
-    color: #fff;
-    border: none;
-    cursor: pointer;
-}
+    .plus-btn, .minus-btn {
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      font-size: 22px;
+      font-weight: bold;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+    }
 
-  .plus-btn {
-    background:#16a34a;
-}
-
-  .minus-btn {
-    background:#dc2626;
-}
+    .plus-btn { background:#16a34a; }
+    .minus-btn { background:#dc2626; }
 
     .edit-btn   { font-size: 20px; cursor: pointer; margin-right: 4px; }
     .delete-btn { font-size: 20px; cursor: pointer; color: #dc2626; }
@@ -331,7 +326,7 @@ let state = {
   homeworks: []
 };
 
-const STORAGE_KEY = "class_manager_v6";
+const STORAGE_KEY = "class_manager_v7";
 
 function loadState() {
   const saved = localStorage.getItem(STORAGE_KEY);
@@ -466,18 +461,16 @@ function renderIndividual() {
       <div class="between">
         <strong>${stu.seat}. ${stu.name}</strong>
         <div style="display:flex;align-items:center;">
-          <span class="score-num">${stu.totalScore}</span>
           <span class="edit-btn" onclick="editStudent(${stu.id})">✏️</span>
           <span class="delete-btn" onclick="deleteStudent(${stu.id})">❌</span>
         </div>
       </div>
 
-    <div style="display:flex;justify-content:center;align-items:center;gap:10px;margin-top:6px;">
-      <button class="plus-btn" onclick="changePersonalScore(${stu.id}, 1)">＋</button>
-      <span class="score-num">${stu.totalScore}</span>
-      <button class="minus-btn" onclick="changePersonalScore(${stu.id}, -1)">−</button>
-    </div>
-
+      <div style="display:flex;justify-content:center;align-items:center;gap:10px;margin-top:6px;">
+        <button class="plus-btn" onclick="changePersonalScore(${stu.id}, 1)">＋</button>
+        <span class="score-num">${stu.totalScore}</span>
+        <button class="minus-btn" onclick="changePersonalScore(${stu.id}, -1)">−</button>
+      </div>
 
       <button class="btn-primary" style="margin-top:6px;width:100%;border-radius:8px;"
         onclick="redeemCard(${stu.id})">
@@ -753,8 +746,10 @@ function renderHomeworkList() {
   box.innerHTML = "";
 
   state.homeworks.forEach(hw => {
-    const submittedCount = Object.values(hw.status).filter(s => s === "已繳交" || s === "待訂正" || s === "已訂正").length;
-    const correctedCount = Object.values(hw.status).filter(s => s === "已訂正").length;
+    const submittedCount = Object.values(hw.status)
+      .filter(s => s === "已繳交" || s === "待訂正" || s === "已訂正").length;
+    const correctedCount = Object.values(hw.status)
+      .filter(s => s === "已訂正").length;
     const total = state.students.length;
 
     const div = document.createElement("div");
@@ -827,18 +822,15 @@ function changeHWStatus(sid) {
 function toggleCheck(sid) {
   if (!currentHW) return;
 
-  const stuCard = document.querySelector(`.hw-stu-card[data-sid="${sid}"]`);
-  const circle = stuCard.querySelector(".circle-check");
+  const card = document.querySelector(`.hw-stu-card[data-sid="${sid}"]`);
+  if (!card) return;
 
-  // 若已派過 bonus，不可再改
+  const circle = card.querySelector(".circle-check");
+
+  // 已派過 bonus → 不可再點
   if (currentHW.awarded.includes(sid)) return;
 
   circle.classList.toggle("checked");
-}
-  if (!currentHW) return;
-  // 已經派過獎勵，不可再剔選
-  if (currentHW.awarded.includes(sid)) return;
-  el.classList.toggle("checked");
 }
 
 function awardOnTime() {
