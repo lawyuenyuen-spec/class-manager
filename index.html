@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
 <head>
   <meta charset="UTF-8" />
-  <title>課室管理小幫手 Classroom Manager v6</title>
+  <title>課室管理小幫手</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <style>
@@ -111,18 +111,27 @@
       margin: 0 6px;
     }
 
-    .plus-btn, .minus-btn {
-      width: 34px;
-      height: 34px;
-      border-radius: 50%;
-      font-size: 22px;
-      border: none;
-      cursor: pointer;
-      color: white;
-      line-height: 34px;
-    }
-    .plus-btn { background: #16a34a; }
-    .minus-btn { background: #dc2626; }
+ .plus-btn, .minus-btn {
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    font-size: 22px;
+    font-weight: bold;
+    color: #fff;
+    border: none;
+    cursor: pointer;
+}
+
+  .plus-btn {
+    background:#16a34a;
+}
+
+  .minus-btn {
+    background:#dc2626;
+}
 
     .edit-btn   { font-size: 20px; cursor: pointer; margin-right: 4px; }
     .delete-btn { font-size: 20px; cursor: pointer; color: #dc2626; }
@@ -463,10 +472,12 @@ function renderIndividual() {
         </div>
       </div>
 
-      <div class="between" style="margin-top:6px;">
-        <button class="plus-btn" onclick="changePersonalScore(${stu.id}, 1)">＋</button>
-        <button class="minus-btn" onclick="changePersonalScore(${stu.id}, -1)">−</button>
-      </div>
+    <div style="display:flex;justify-content:center;align-items:center;gap:10px;margin-top:6px;">
+      <button class="plus-btn" onclick="changePersonalScore(${stu.id}, 1)">＋</button>
+      <span class="score-num">${stu.totalScore}</span>
+      <button class="minus-btn" onclick="changePersonalScore(${stu.id}, -1)">−</button>
+    </div>
+
 
       <button class="btn-primary" style="margin-top:6px;width:100%;border-radius:8px;"
         onclick="redeemCard(${stu.id})">
@@ -742,7 +753,7 @@ function renderHomeworkList() {
   box.innerHTML = "";
 
   state.homeworks.forEach(hw => {
-    const submittedCount = Object.values(hw.status).filter(s => s === "已繳交").length;
+    const submittedCount = Object.values(hw.status).filter(s => s === "已繳交" || s === "待訂正" || s === "已訂正").length;
     const correctedCount = Object.values(hw.status).filter(s => s === "已訂正").length;
     const total = state.students.length;
 
@@ -784,7 +795,7 @@ function openHomework(id) {
 
     card.innerHTML = `
       <div class="circle-check ${checked ? "checked":""}"
-           onclick="toggleCheck(${stu.id}, this)"></div>
+           onclick="toggleCheck(${stu.id})"></div>
       <strong>${stu.seat}. ${stu.name}</strong>
       <br>
       <button class="status-btn" onclick="changeHWStatus(${stu.id})">
@@ -813,7 +824,17 @@ function changeHWStatus(sid) {
   openHomework(currentHW.id); // 重新渲染 modal
 }
 
-function toggleCheck(sid, el) {
+function toggleCheck(sid) {
+  if (!currentHW) return;
+
+  const stuCard = document.querySelector(`.hw-stu-card[data-sid="${sid}"]`);
+  const circle = stuCard.querySelector(".circle-check");
+
+  // 若已派過 bonus，不可再改
+  if (currentHW.awarded.includes(sid)) return;
+
+  circle.classList.toggle("checked");
+}
   if (!currentHW) return;
   // 已經派過獎勵，不可再剔選
   if (currentHW.awarded.includes(sid)) return;
