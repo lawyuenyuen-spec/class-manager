@@ -604,6 +604,118 @@ function renameGroup(id, name) {
   saveState();
 }
 
+/* ================= 小組計分：核心 4 個 function ================= */
+
+// 1️⃣ 渲染小組 + 未分組
+function renderGroups() {
+  const groupBox = document.getElementById("groupList");
+  const ungroupedBox = document.getElementById("ungroupedList");
+  if (!groupBox || !ungroupedBox) return;
+
+  groupBox.innerHTML = "";
+  ungroupedBox.innerHTML = "";
+
+  // 左邊：未分組學生
+  state.students.forEach(stu => {
+    const inGroup = state.groups.some(g => g.memberIds.includes(stu.id));
+    if (!inGroup) {
+      const card = document.createElement("div");
+      card.className = "student-card";
+      card.draggable = true;
+      card.dataset.sid = stu.id;
+      card.innerHTML = `<strong>${stu.seat}. ${stu.name}</strong>`;
+      ungroupedBox.appendChild(card);
+    }
+  });
+
+  // 右邊：每一組
+  state.groups.forEach(g => {
+    const div = document.createElement("div");
+    div.className = "group-card";
+    div.dataset.gid = g.id;
+
+    // 計算組內今日分
+    g.groupScore = g.memberIds
+      .map(id => state.students.find(s => s.id === id)?.individualGroupScoreToday || 0)
+      .reduce((a, b) => a + b, 0);
+
+    let membersHTML = "";
+    g.memberIds
+      .map(id => state.students.find(s => s.id === id))
+      .filter(Boolean)
+      .sort((a, b) => a.seat - b.seat)
+      .forEach(stu => {
+        membersHTML += `
+          <div class="between group-member" draggable="true" data-sid="${stu.id}" style="margin-top:6px;">
+            <span>${stu.seat}. ${stu.name}</span>
+
+            <div style="display:flex;align-items:center;gap:8px;">
+              <button class="minus-btn" style="width:26px;height:26px;font-size:18px;"
+                onclick="changeGroupMemberScore(${stu.id}, -1); event.stopPropagation();">−</button>
+
+              <strong style="width:24px;text-align:center;font-size:18px;">
+                ${stu.individualGroupScoreToday}
+              </strong>
+
+              <button class="plus-btn" style="width:26px;height:26px;font-size:18px;"
+                onclick="changeGroupMemberScore(${stu.id}, 1); event.stopPropagation();">＋</button>
+            </div>
+          </div>
+        `;
+      });
+
+    div.innerHTML = `
+  <div class="between">
+    <input value="${g.name}"
+      onchange="renameGroup(${g.id}, this.value)"
+      style="border:none;font-size:16px;font-weight:bold;">
+
+    <div style="display:flex;align-items:center;gap:10px;">
+      <strong>${g.groupScore} 分</strong>
+      <span style="cursor:pointer;font-size:20px;color:#dc2626;"
+        onclick="deleteGroup(${g.id}); event.stopPropagation();">
+        🗑
+      </span>
+    </div>
+  </div>
+
+  ${membersHTML}
+
+  <button class="btn-primary" style="margin-top:8px;" onclick="settleGroup(${g.id})">
+    結算
+  </button>
+`;
+function deleteGroup(gid) {
+  if (!confirm("確定要刪除這個小組？")) return;
+
+  // 找到該小組
+  const g = state.groups.find(x => x.id === gid);
+  if (!g) return;
+
+  // 組員移回未分組 + 今日分清零
+  g.memberIds.forEach(sid => {
+    const stu = state.students.find(s => s.id === sid);
+    if (stu) stu.individualGroupScoreToday = 0;
+  });
+
+  // 刪除小組
+  state.groups = state.groups.filter(x => x.id !== gid);
+
+  saveState();
+  renderGroups();
+  renderGroupRanking();
+  renderDangerZone();
+}
+
+
+    groupBox.appendChild(div);
+  });
+
+  // 每次 render 後重新綁 drag 事件
+  enableDrag();
+}
+
+// 2️⃣ 啟用拖拉：包括左邊 student-card 同右邊 group-member
 function enableDrag() {
   const draggables = document.querySelectorAll("[draggable='true'][data-sid]");
   const groupCards = document.querySelectorAll(".group-card");
@@ -620,7 +732,8 @@ function enableDrag() {
     card.addEventListener("drop", e => {
       e.preventDefault();
       const sid = Number(e.dataTransfer.getData("sid"));
-      moveStudentToGroup(sid, Number(card.dataset.gid));
+      const gid = Number(card.dataset.gid);
+      moveStudentToGroup(sid, gid);
     });
   });
 
@@ -634,36 +747,38 @@ function enableDrag() {
   }
 }
 
+// 3️⃣ 移動學生 → 某個小組
 function moveStudentToGroup(sid, gid) {
-  state.groups.forEach(g => g.memberIds = g.memberIds.filter(x => x !== sid));
-  const g = state.groups.find(x => x.id === gid);
-  if (!g) return;
-  g.memberIds.push(sid);
+  // 先從所有小組剔除
+  state.groups.forEach(g => {
+    g.memberIds = g.memberIds.filter(x => x !== sid);
+  });
+
+  const target = state.groups.find(g => g.id === gid);
+  if (!target) return;
+  target.memberIds.push(sid);
+
   saveState();
   renderGroups();
   renderGroupRanking();
   renderDangerZone();
 }
 
+// 4️⃣ 移出小組 → 回「未分組」，並清零今日組分
 function removeFromGroup(sid) {
-  state.groups.forEach(g => g.memberIds = g.memberIds.filter(x => x !== sid));
+  state.groups.forEach(g => {
+    g.memberIds = g.memberIds.filter(x => x !== sid);
+  });
+
   const stu = state.students.find(s => s.id === sid);
   if (stu) stu.individualGroupScoreToday = 0;
+
   saveState();
   renderGroups();
   renderGroupRanking();
   renderDangerZone();
 }
 
-function changeGroupMemberScore(id, delta) {
-  const stu = state.students.find(s => s.id === id);
-  if (!stu) return;
-  stu.individualGroupScoreToday = Math.max(0, stu.individualGroupScoreToday + delta);
-  saveState();
-  renderGroups();
-  renderGroupRanking();
-  renderDangerZone();
-}
 
 function settleGroup(gid) {
   const g = state.groups.find(x => x.id === gid);
