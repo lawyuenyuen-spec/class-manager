@@ -147,12 +147,32 @@
       margin-bottom: 12px;
     }
 
-    /* 小組成員：兩個一行的 grid */
+    /* 小組成員：兩個一行 */
     .group-members-grid {
       display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
+      flex-direction: column;
+      gap: 8px;
       margin-top: 10px;
+    }
+
+    .group-members-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 15px;
+      margin-bottom: 4px;
+    }
+
+    .group-member-card {
+      flex: 1;
+      min-height: 48px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 14px;
+      background: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.08);
+      font-size: 15px;
     }
 
     .group-member-name {
@@ -216,7 +236,7 @@
 
     .student-grid {
       display: grid;
-      grid-template-columns: repeat(5, minmax(0, 1fr)); /* 最多 5 欄 */
+      grid-template-columns: repeat(5, minmax(0, 1fr));
       gap: 10px;
       margin-top: 12px;
     }
@@ -284,77 +304,35 @@
       flex-wrap: wrap;
     }
 
+    /* 分組排名 + 抽籤 + 危險區 橫向排 */
+    .row-lotteryDanger {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 20px;
+      margin-top: 20px;
+    }
+
+    .row-lotteryDanger .card {
+      flex: 1 1 auto;
+      margin-top: 0;
+    }
+
+    .row-lotteryDanger > div:nth-child(2) {
+      flex: 1 1 auto;
+    }
+
     @media (max-width: 768px) {
       .student-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
       }
       .group-member-card {
-        flex: 0 0 100%; /* 細屏幕變 1 人一行 */
+        flex: 0 0 100%;
+      }
+      .row-lotteryDanger {
+        flex-direction: column;
       }
     }
-    /* 🟦 小組學生卡：兩個一行 */
-.group-members-row {
-  display: flex;
-  justify-content: space-between;
-  gap: 15px;
-  margin-bottom: 8px;
-}
-
-/* 每個學生卡 */
-.group-member-card {
-  flex: 1;
-  min-height: 48px; /* 卡片變高 */
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px 14px; /* 內距更大 */
-  background: #ffffff;
-  border-radius: 12px; /* 更圓滑 */
-  box-shadow: 0 3px 8px rgba(0,0,0,0.08);
-  font-size: 15px;
-}
-
-/* 名字 */
-.group-member-name {
-  font-size: 20px;
-  font-weight: 600;
-}
-
-/* 加減控制區 */
-.group-member-controls {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.group-member-controls .minus-btn,
-.group-member-controls .plus-btn {
-  width: 32px;
-  height: 32px;
-  font-size: 20px;
-}
-
-.group-member-score {
-  width: 30px;
-  text-align: center;
-  font-size: 18px;
-  font-weight: 800;
-}
-    .row-lotteryDanger {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 20px;
-  margin-top: 20px;
-}
-
-.row-lotteryDanger .card {
-  flex: 1 1 auto;
-}
-
-.row-lotteryDanger > div:nth-child(2) {
-  flex: 1 1 auto;
-}
   </style>
 </head>
 
@@ -406,17 +384,22 @@
     <h3>🏆 分組排名</h3>
     <div id="groupRanking"></div>
 
-    <h3 style="margin-top:20px;">⚠️ 危險區（今日 0 分）</h3>
-    <div id="dangerZone"></div>
+    <!-- 抽籤 + 危險區 同一行 -->
+    <div class="row-lotteryDanger">
+      <div class="card">
+        <h3>🎯 抽籤</h3>
+        <input id="lotteryNum" type="number" placeholder="抽出人數" style="width:120px;">
+        <button class="btn-primary" onclick="drawLottery()">抽籤</button>
+        <div id="lotteryResult" style="margin-top:10px; font-size:16px; font-weight:600;"></div>
+      </div>
+
+      <div>
+        <h3>⚠️ 危險區（今日 0 分）</h3>
+        <div id="dangerZone"></div>
+      </div>
+    </div>
   </div>
 
-  <div class="card" style="margin-top:16px;">
-  <h3>🎯 抽籤</h3>
-  <input id="lotteryNum" type="number" placeholder="抽出人數" style="width:120px;">
-  <button class="btn-primary" onclick="drawLottery()">抽籤</button>
-  <div id="lotteryResult" style="margin-top:10px; font-size:16px; font-weight:600;"></div>
-</div>
-  
   <!-- 作業訂正頁 -->
   <div id="page-homework" class="page">
     <h2>作業訂正</h2>
@@ -629,7 +612,7 @@ function deleteGroup(gid) {
   const g = state.groups.find(x => x.id === gid);
   if (!g) return;
 
-  // 組員當日組分清零（會自動回到左邊未分組）
+  // 組員當日組分清零
   g.memberIds.forEach(sid => {
     const stu = state.students.find(s => s.id === sid);
     if (stu) stu.individualGroupScoreToday = 0;
@@ -675,22 +658,22 @@ function renderGroups() {
       .reduce((a, b) => a + b, 0);
 
     let members = g.memberIds
-  .map(id => state.students.find(s => s.id === id))
-  .filter(Boolean)
-  .sort((a,b) => a.seat - b.seat);
+      .map(id => state.students.find(s => s.id === id))
+      .filter(Boolean)
+      .sort((a,b) => a.seat - b.seat);
 
-let membersHTML = "";
-for (let i = 0; i < members.length; i += 2) {
-  const m1 = members[i];
-  const m2 = members[i + 1];
+    let membersHTML = "";
+    for (let i = 0; i < members.length; i += 2) {
+      const m1 = members[i];
+      const m2 = members[i + 1];
 
-  membersHTML += `
-    <div class="group-members-row">
-      ${renderMemberCard(m1)}
-      ${m2 ? renderMemberCard(m2) : ""}
-    </div>
-  `;
-}
+      membersHTML += `
+        <div class="group-members-row">
+          ${renderMemberCard(m1)}
+          ${m2 ? renderMemberCard(m2) : ""}
+        </div>
+      `;
+    }
 
     div.innerHTML = `
       <div class="between">
@@ -728,10 +711,9 @@ function renameGroup(id, name) {
   g.name = name.trim();
   saveState();
 }
-  
+
 function renderMemberCard(stu) {
   if (!stu) return "";
-
   return `
     <div class="group-member-card" draggable="true" data-sid="${stu.id}">
       <div class="group-member-name">${stu.seat}. ${stu.name}</div>
@@ -748,7 +730,7 @@ function renderMemberCard(stu) {
     </div>
   `;
 }
-  
+
 function enableDrag() {
   const draggables = document.querySelectorAll("[draggable='true'][data-sid]");
   const groupCards = document.querySelectorAll(".group-card");
@@ -862,22 +844,7 @@ function renderGroupRanking() {
     box.appendChild(div);
   });
 }
-  
-<!-- 分組排名之後，插入以下： -->
-<div class="row-lotteryDanger">
-  <div class="card" style="margin-top:0;">
-    <h3>🎯 抽籤</h3>
-    <input id="lotteryNum" type="number" placeholder="抽出人數" style="width:120px;">
-    <button class="btn-primary" onclick="drawLottery()">抽籤</button>
-    <div id="lotteryResult" style="margin-top:10px; font-size:16px; font-weight:600;"></div>
-  </div>
 
-  <div style="flex:1;">
-    <h3>⚠️ 危險區（今日 0 分）</h3>
-    <div id="dangerZone"></div>
-  </div>
-</div>
-  
 /* 危險區：今日 0 分 */
 function renderDangerZone() {
   const box = document.getElementById("dangerZone");
