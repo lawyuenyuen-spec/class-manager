@@ -151,36 +151,36 @@
     .group-members-grid {
       display: flex;
       flex-wrap: wrap;
-      gap: 8px;
-      margin-top: 8px;
+      gap: 10px;
+      margin-top: 10px;
     }
 
     .group-member-name {
-      font-size: 14px;
+      font-size: 16px;
       font-weight: 600;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      margin-right: 4px;
+      margin-right: 6px;
     }
 
     .group-member-controls {
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 8px;
     }
 
     .group-member-controls .minus-btn,
     .group-member-controls .plus-btn {
-      width: 26px;
-      height: 26px;
-      font-size: 18px;
+      width: 32px;
+      height: 32px;
+      font-size: 20px;
     }
 
     .group-member-score {
-      width: 22px;
+      width: 30px;
       text-align: center;
-      font-size: 16px;
+      font-size: 18px;
       font-weight: 700;
     }
 
@@ -296,25 +296,27 @@
 .group-members-row {
   display: flex;
   justify-content: space-between;
-  gap: 12px;
+  gap: 15px;
   margin-bottom: 8px;
 }
 
 /* 每個學生卡 */
 .group-member-card {
   flex: 1;
+  min-height: 48px; /* 卡片變高 */
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 6px 10px;
+  padding: 10px 14px; /* 內距更大 */
   background: #ffffff;
-  border-radius: 10px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+  border-radius: 12px; /* 更圓滑 */
+  box-shadow: 0 3px 8px rgba(0,0,0,0.08);
+  font-size: 15px;
 }
 
 /* 名字 */
 .group-member-name {
-  font-size: 14px;
+  font-size: 20px;
   font-weight: 600;
 }
 
@@ -322,21 +324,21 @@
 .group-member-controls {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
 }
 
 .group-member-controls .minus-btn,
 .group-member-controls .plus-btn {
-  width: 26px;
-  height: 26px;
-  font-size: 18px;
+  width: 32px;
+  height: 32px;
+  font-size: 20px;
 }
 
 .group-member-score {
-  width: 24px;
+  width: 30px;
   text-align: center;
-  font-size: 16px;
-  font-weight: 700;
+  font-size: 18px;
+  font-weight: 800;
 }
   </style>
 </head>
