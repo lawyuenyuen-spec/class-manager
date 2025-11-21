@@ -303,6 +303,52 @@
         flex: 0 0 100%; /* 細屏幕變 1 人一行 */
       }
     }
+    /* 🟦 小組學生卡：兩個一行 */
+.group-members-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+/* 每個學生卡 */
+.group-member-card {
+  flex: 1;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 10px;
+  background: #ffffff;
+  border-radius: 10px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+}
+
+/* 名字 */
+.group-member-name {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* 加減控制區 */
+.group-member-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.group-member-controls .minus-btn,
+.group-member-controls .plus-btn {
+  width: 26px;
+  height: 26px;
+  font-size: 18px;
+}
+
+.group-member-score {
+  width: 24px;
+  text-align: center;
+  font-size: 16px;
+  font-weight: 700;
+}
   </style>
 </head>
 
@@ -623,28 +669,23 @@ function renderGroups() {
       .map(id => state.students.find(s => s.id === id)?.individualGroupScoreToday || 0)
       .reduce((a, b) => a + b, 0);
 
-    let membersHTML = "";
-    const members = g.memberIds
-      .map(id => state.students.find(s => s.id === id))
-      .filter(Boolean)
-      .sort((a,b) => a.seat - b.seat);
+    let members = g.memberIds
+  .map(id => state.students.find(s => s.id === id))
+  .filter(Boolean)
+  .sort((a,b) => a.seat - b.seat);
 
-    members.forEach(stu => {
-      membersHTML += `
-        <div class="group-member-card" draggable="true" data-sid="${stu.id}">
-          <div class="group-member-name">
-            ${stu.seat}. ${stu.name}
-          </div>
-          <div class="group-member-controls">
-            <button class="minus-btn"
-              onclick="changeGroupMemberScore(${stu.id}, -1); event.stopPropagation();">−</button>
-            <span class="group-member-score">${stu.individualGroupScoreToday}</span>
-            <button class="plus-btn"
-              onclick="changeGroupMemberScore(${stu.id}, 1); event.stopPropagation();">＋</button>
-          </div>
-        </div>
-      `;
-    });
+let membersHTML = "";
+for (let i = 0; i < members.length; i += 2) {
+  const m1 = members[i];
+  const m2 = members[i + 1];
+
+  membersHTML += `
+    <div class="group-members-row">
+      ${renderMemberCard(m1)}
+      ${m2 ? renderMemberCard(m2) : ""}
+    </div>
+  `;
+}
 
     div.innerHTML = `
       <div class="between">
@@ -682,7 +723,26 @@ function renameGroup(id, name) {
   g.name = name.trim();
   saveState();
 }
+  
+function renderMemberCard(stu) {
+  if (!stu) return "";
 
+  return `
+    <div class="group-member-card" draggable="true" data-sid="${stu.id}">
+      <div class="group-member-name">${stu.seat}. ${stu.name}</div>
+
+      <div class="group-member-controls">
+        <button class="minus-btn"
+          onclick="changeGroupMemberScore(${stu.id}, -1); event.stopPropagation();">−</button>
+
+        <span class="group-member-score">${stu.individualGroupScoreToday}</span>
+
+        <button class="plus-btn"
+          onclick="changeGroupMemberScore(${stu.id}, 1); event.stopPropagation();">＋</button>
+      </div>
+    </div>
+  `;
+}
 function enableDrag() {
   const draggables = document.querySelectorAll("[draggable='true'][data-sid]");
   const groupCards = document.querySelectorAll(".group-card");
