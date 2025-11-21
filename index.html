@@ -381,10 +381,19 @@
 
     <hr style="margin:24px 0 12px;">
 
+    <div class="row-lotteryDanger">
+  <div style="flex:1;">
     <h3>🏆 分組排名</h3>
     <div id="groupRanking"></div>
+  </div>
 
-    <!-- 抽籤 + 危險區 同一行 -->
+  <div style="flex:1;">
+    <h3>⚠️ 危險區（今日 0 分）</h3>
+    <div id="dangerZone"></div>
+  </div>
+</div>
+    
+    <!-- 抽籤-->
     <div class="row-lotteryDanger">
       <div class="card">
         <h3>🎯 抽籤</h3>
@@ -392,13 +401,6 @@
         <button class="btn-primary" onclick="drawLottery()">抽籤</button>
         <div id="lotteryResult" style="margin-top:10px; font-size:16px; font-weight:600;"></div>
       </div>
-
-      <div>
-        <h3>⚠️ 危險區（今日 0 分）</h3>
-        <div id="dangerZone"></div>
-      </div>
-    </div>
-  </div>
 
   <!-- 作業訂正頁 -->
   <div id="page-homework" class="page">
@@ -761,7 +763,12 @@ function enableDrag() {
     });
   }
 }
-
+  
+<div class="group-col">
+  <h3>未分組學生</h3>
+  <div id="ungroupedList" class="student-list"></div>
+</div>
+  
 function moveStudentToGroup(sid, gid) {
   state.groups.forEach(g => {
     g.memberIds = g.memberIds.filter(x => x !== sid);
