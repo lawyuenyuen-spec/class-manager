@@ -289,7 +289,7 @@
       background: #2563eb;
     }
 
-    /* 已派過準時交 +1 分 → 綠色圈圈 */
+    /* 已派準時交 +1 分 → 綠色圈圈 */
     .circle-check.awarded {
       background: #16a34a;
       border-color: #16a34a;
@@ -350,76 +350,6 @@
       }
     }
   </style>
-    <!-- 🚀 Firebase + Firestore：雲端儲存設定 -->
-  <script type="module">
-    // 1. 引用 Firebase 函式庫
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
-    import { 
-      getFirestore, 
-      doc, 
-      getDoc, 
-      setDoc 
-    } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-firestore.js";
-
-    // 2. 你自己的 Firebase 設定（就係你貼嗰段）
-    const firebaseConfig = {
-      apiKey: "AIzaSyAXq6GUpNLZGUt5OR9JUGnEyHww0W5141k",
-      authDomain: "class-manage-a78af.firebaseapp.com",
-      projectId: "class-manage-a78af",
-      storageBucket: "class-manage-a78af.firebasestorage.app",
-      messagingSenderId: "864798135082",
-      appId: "1:864798135082:web:362938e75a24151e188453",
-      measurementId: "G-DB5JV1ZDBT"
-    };
-
-    // 3. 初始化 Firebase + Firestore
-    const app = initializeApp(firebaseConfig);
-    const db  = getFirestore(app);
-
-    // 4. 我哋決定用呢一個 document 去儲你全班 state
-    // collection = "classes"，document id = "defaultClass"
-    const stateDocRef = doc(db, "classes", "defaultClass");
-
-    // 5. 定義「由雲端讀取」同「寫去雲端」兩個 function
-    async function loadStateFromCloud() {
-      try {
-        const snap = await getDoc(stateDocRef);
-        if (snap.exists()) {
-          console.log("✅ 從雲端讀取到 state");
-          return snap.data();
-        } else {
-          console.log("⚠️ 雲端暫時未有資料，會用本機預設空白 state");
-          // 開一份空白 document 俾你之後儲
-          await setDoc(stateDocRef, {
-            students: [],
-            groups: [],
-            homeworks: []
-          });
-          return null;
-        }
-      } catch (err) {
-        console.error("讀取雲端失敗：", err);
-        return null;
-      }
-    }
-
-    async function saveStateToCloud(newState) {
-      try {
-        await setDoc(stateDocRef, newState);
-        console.log("✅ 已儲存 state 去雲端");
-      } catch (err) {
-        console.error("儲存去雲端失敗：", err);
-      }
-    }
-
-    // 6. 暴露俾下面嗰個普通 <script> 用
-    window.__firebaseCloud = {
-      loadStateFromCloud,
-      saveStateToCloud
-    };
-  </script>
-</head>
-
 </head>
 
 <body>
@@ -526,8 +456,19 @@
 <script type="module">
 /* ================= Firebase 初始化 ================= */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
-import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-firestore.js";
+import { 
+  getAuth, 
+  GoogleAuthProvider, 
+  signInWithPopup, 
+  onAuthStateChanged, 
+  signOut 
+} from "https://www.gstatic.com/firebasejs/12.6.0/firebase-auth.js";
+import { 
+  getFirestore, 
+  doc, 
+  getDoc, 
+  setDoc 
+} from "https://www.gstatic.com/firebasejs/12.6.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAXq6GUpNLZGUt5OR9JUGnEyHww0W5141k",
@@ -558,7 +499,12 @@ const STORAGE_KEY = "class_manager_v6";
 function loadStateLocal() {
   const saved = localStorage.getItem(STORAGE_KEY);
   if (saved) {
-    try { state = JSON.parse(saved); } catch (e) { console.error(e); }
+    try { 
+      state = JSON.parse(saved); 
+      console.log("📒 已由本機 localStorage 還原 state");
+    } catch (e) { 
+      console.error("解析本機資料失敗：", e); 
+    }
   }
 }
 
@@ -567,34 +513,19 @@ function saveStateLocal() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
 }
 
-function saveState() {
-  // 1️⃣ 仍然儲一份喺本機，方便冇網絡時用
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-
-  // 2️⃣ 如果有 Firebase，就順便推上雲端
-  if (window.__firebaseCloud && window.__firebaseCloud.saveStateToCloud) {
-    window.__firebaseCloud.saveStateToCloud(state);
-  }
-}
-
-
-/* 初始啟動用，只載入本機 */
-function loadState() {
-  loadStateLocal();
-}
-
-/* 雲端：儲存 Firestore */
+/* 雲端：儲存 Firestore（每次 saveState 時，如果已登入就 upload） */
 async function saveStateToCloud() {
   if (!db || !currentUser) return;
   try {
     const ref = doc(db, "users", currentUser.uid, "classes", "default");
     await setDoc(ref, { state }, { merge: true });
+    console.log("☁️ 已儲存到雲端 Firestore");
   } catch (e) {
     console.error("儲存到雲端失敗", e);
   }
 }
 
-/* 雲端：載入 Firestore */
+/* 雲端：載入 Firestore 覆蓋本機 */
 async function loadStateFromCloud() {
   if (!db || !currentUser) return;
   try {
@@ -605,15 +536,28 @@ async function loadStateFromCloud() {
       if (data && data.state) {
         state = data.state;
         saveStateLocal();
+        console.log("☁️ 已用雲端 state 覆蓋本機");
         rerenderAll();
       }
     } else {
       // 第一次登入，用本機 state 建立雲端
       await setDoc(ref, { state }, { merge: true });
+      console.log("☁️ 雲端未有資料，已以本機 state 建立");
     }
   } catch (e) {
     console.error("從雲端載入失敗", e);
   }
+}
+
+/* 統一儲存：本機 + 雲端 */
+function saveState() {
+  saveStateLocal();
+  saveStateToCloud();
+}
+
+/* 初始啟動用：只載入本機，雲端交畀 onAuthStateChanged 處理 */
+function loadState() {
+  loadStateLocal();
 }
 
 /* 一次過 rerender */
@@ -1247,47 +1191,12 @@ function deleteHomework() {
 }
 
 /* ================= INIT ================= */
-document.addEventListener("DOMContentLoaded", async () => {
-  // 等本機 + 雲端資料讀好先
-  await loadState();
-
-  initTabs();
-  renderIndividual();
-  renderGroups();
-  renderGroupRanking();
-  renderDangerZone();
-  renderHomeworkList();
-});
-
-// ✅ 新版：會先讀 localStorage，再嘗試用 Firebase 覆蓋
-async function loadState() {
-  // 1️⃣ 先試讀本機（避免完全冇資料時空白）
-  const savedLocal = localStorage.getItem(STORAGE_KEY);
-  if (savedLocal) {
-    try {
-      state = JSON.parse(savedLocal);
-      console.log("📒 已由本機 localStorage 還原 state");
-    } catch (e) {
-      console.error("解析本機資料失敗：", e);
-    }
-  }
-
-  // 2️⃣ 再試讀雲端（如果有 Firebase）
-  if (window.__firebaseCloud && window.__firebaseCloud.loadStateFromCloud) {
-    const cloudState = await window.__firebaseCloud.loadStateFromCloud();
-    if (cloudState) {
-      state = cloudState;
-      // 同步返去本機，方便離線用
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-      console.log("☁️ 已用雲端資料覆蓋本機 state");
-    }
-  }
-}
-
-window.addEventListener("DOMContentLoaded", () => {
-  initTabs();
-  initAuthUI();
-  rerenderAll();
+document.addEventListener("DOMContentLoaded", () => {
+  loadState();      // 1️⃣ 先由本機還原
+  initTabs();       // 2️⃣ Tabs 切換
+  initAuthUI();     // 3️⃣ 啟動登入系統（如登入會再載雲端）
+  rerenderAll();    // 4️⃣ 畫面顯示一次
+  enableDrag();     // 5️⃣ 啟用拖拉
 });
 
 /* 把部分 function 掛到 window 方便 inline onclick 用 */
@@ -1301,6 +1210,7 @@ window.addGroup = addGroup;
 window.deleteGroup = deleteGroup;
 window.changeGroupMemberScore = changeGroupMemberScore;
 window.settleGroup = settleGroup;
+window.renameGroup = renameGroup;
 
 window.drawLottery = drawLottery;
 
@@ -1311,8 +1221,6 @@ window.changeHWStatus = changeHWStatus;
 window.toggleCheck = toggleCheck;
 window.awardOnTime = awardOnTime;
 window.deleteHomework = deleteHomework;
-window.renameGroup = renameGroup;
-});
 </script>
 
 </body>
