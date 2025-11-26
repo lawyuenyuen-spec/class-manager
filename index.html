@@ -5,9 +5,14 @@
   <title>課室管理小幫手</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
+  <!-- 柔和字體：Nunito + Noto Sans TC -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+
   <style>
     body {
-      font-family: "Segoe UI", "Noto Sans TC", sans-serif;
+      font-family: "Nunito", "Noto Sans TC", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       background: #f5f7fa;
       margin: 0;
       padding: 0;
@@ -83,6 +88,7 @@
       border: none;
       cursor: pointer;
       font-size: 14px;
+      font-family: inherit;
     }
 
     .btn-primary { background: #2563eb; color: white; }
@@ -115,6 +121,7 @@
       border-radius: 12px;
       padding: 12px;
       box-shadow: 0 3px 8px rgba(0,0,0,0.08);
+      font-size: 14px;
     }
 
     .score-num {
@@ -149,14 +156,20 @@
     .delete-btn { font-size: 20px; cursor: pointer; color: #dc2626; }
 
     /* Group page */
-    .group-section { display: flex; gap: 20px; }
-    .group-col { flex: 1; }
     .group-card {
       background: white;
       padding: 14px;
       border-radius: 12px;
       box-shadow: 0 4px 10px rgba(0,0,0,0.08);
       margin-bottom: 12px;
+    }
+
+    /* 小組列表：兩欄並排 */
+    .group-list-grid {
+      display:grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 12px;
+      margin-top: 10px;
     }
 
     /* 小組學生：兩個一行 */
@@ -260,7 +273,7 @@
 
     .student-grid {
       display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr)); /* 卡片闊啲 */
+      grid-template-columns: repeat(2, minmax(0, 1fr)); /* 卡片闊啲，兩欄 */
       gap: 12px;
       margin-top: 16px;
     }
@@ -270,26 +283,46 @@
       border-radius: 12px;
       background: #f9fafb;
       border: 1px solid #ddd;
-      position: relative;
       font-size: 15px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:8px;
+    }
+
+    .hw-left {
+      display:flex;
+      align-items:center;
+      gap:10px;
+      flex:1;
+      min-width:0;
+    }
+
+    .hw-name {
+      font-size: 16px;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .circle-check {
-      position: absolute;
-      top: 8px;
-      right: 8px;
-      width: 22px;
-      height: 22px;
-      border: 2px solid #2563eb;
+      width: 24px;
+      height: 24px;
+      border: 2px solid #9ca3af; /* 灰色邊 */
       border-radius: 50%;
       cursor: pointer;
+      flex-shrink:0;
+      background: transparent;
     }
 
+    /* 藍色：今次打勾準備派分 */
     .circle-check.checked {
       background: #2563eb;
+      border-color: #2563eb;
     }
 
-    /* 已派準時交 +1 分 → 綠色圈圈 */
+    /* 綠色：已派過準時交 +1 分 */
     .circle-check.awarded {
       background: #16a34a;
       border-color: #16a34a;
@@ -297,12 +330,12 @@
     }
 
     .status-btn {
-      margin-top: 8px;
       padding: 6px 10px;
       font-size: 13px;
       border-radius: 8px;
       cursor: pointer;
       border: none;
+      white-space: nowrap;
     }
 
     /* 作業狀態顏色 */
@@ -337,13 +370,13 @@
 
     @media (max-width: 768px) {
       .student-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
-      .group-section {
-        flex-direction: column;
+        grid-template-columns: 1fr;
       }
       .row-lotteryDanger {
         flex-direction: column;
+      }
+      .group-list-grid {
+        grid-template-columns: 1fr;
       }
       .group-member-card {
         flex: 1 1 100%;
@@ -360,6 +393,7 @@
   <!-- 登入列 -->
   <div class="auth-bar">
     <span id="userInfo">未登入（使用本機儲存）</span>
+    <button id="syncBtn" class="btn-secondary">🔄 立即同步</button>
     <button id="loginBtn" class="btn-secondary">用 Google 登入</button>
     <button id="logoutBtn" class="btn-secondary" style="display:none;">登出</button>
   </div>
@@ -389,18 +423,22 @@
   <div id="page-group" class="page">
     <h2>小組積分</h2>
 
-    <div class="group-section">
-      <div class="group-col">
-        <h3>未分組學生</h3>
-        <div id="ungroupedList" class="student-list"></div>
-      </div>
-
-      <div class="group-col">
-        <h3>小組列表</h3>
-        <button class="btn-primary" onclick="addGroup()">＋ 新小組</button>
-        <div id="groupList" style="margin-top:12px;"></div>
-      </div>
+    <!-- 新增小組按鈕 -->
+    <div class="card" style="margin-bottom:16px;">
+      <button class="btn-primary" onclick="addGroup()">＋ 新小組</button>
     </div>
+
+    <!-- 小組列表：兩欄並排 -->
+    <div>
+      <h3>小組列表</h3>
+      <div id="groupList" class="group-list-grid"></div>
+    </div>
+
+    <hr style="margin:24px 0 12px;">
+
+    <!-- 未分組學生 放在下面 -->
+    <h3>未分組學生</h3>
+    <div id="ungroupedList" class="student-list"></div>
 
     <hr style="margin:24px 0 12px;">
 
@@ -453,774 +491,771 @@
   </div>
 </div>
 
+<!-- 主程式：Firebase + App 邏輯 -->
 <script type="module">
-/* ================= Firebase 初始化 ================= */
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
-import { 
-  getAuth, 
-  GoogleAuthProvider, 
-  signInWithPopup, 
-  onAuthStateChanged, 
-  signOut 
-} from "https://www.gstatic.com/firebasejs/12.6.0/firebase-auth.js";
-import { 
-  getFirestore, 
-  doc, 
-  getDoc, 
-  setDoc 
-} from "https://www.gstatic.com/firebasejs/12.6.0/firebase-firestore.js";
+  /* ================= Firebase 初始化 ================= */
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
+  import { 
+    getAuth, 
+    GoogleAuthProvider, 
+    signInWithPopup, 
+    onAuthStateChanged, 
+    signOut 
+  } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-auth.js";
+  import { 
+    getFirestore, 
+    doc, 
+    getDoc, 
+    setDoc 
+  } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-firestore.js";
 
-const firebaseConfig = {
-  apiKey: "AIzaSyAXq6GUpNLZGUt5OR9JUGnEyHww0W5141k",
-  authDomain: "class-manage-a78af.firebaseapp.com",
-  projectId: "class-manage-a78af",
-  storageBucket: "class-manage-a78af.firebasestorage.app",
-  messagingSenderId: "864798135082",
-  appId: "1:864798135082:web:362938e75a24151e188453",
-  measurementId: "G-DB5JV1ZDBT"
-};
+  const firebaseConfig = {
+    apiKey: "AIzaSyAXq6GUpNLZGUt5OR9JUGnEyHww0W5141k",
+    authDomain: "class-manage-a78af.firebaseapp.com",
+    projectId: "class-manage-a78af",
+    storageBucket: "class-manage-a78af.firebasestorage.app",
+    messagingSenderId: "864798135082",
+    appId: "1:864798135082:web:362938e75a24151e188453",
+    measurementId: "G-DB5JV1ZDBT"
+  };
 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db   = getFirestore(app);
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db   = getFirestore(app);
 
-let currentUser = null;
+  let currentUser = null;
 
-/* ================= STATE & STORAGE ================= */
-let state = {
-  students: [],
-  groups: [],
-  homeworks: []
-};
+  /* ================= STATE & STORAGE ================= */
+  let state = {
+    students: [],
+    groups: [],
+    homeworks: []
+  };
 
-const STORAGE_KEY = "class_manager_v6";
+  const STORAGE_KEY = "class_manager_v6";
 
-/* 本機載入 */
-function loadStateLocal() {
-  const saved = localStorage.getItem(STORAGE_KEY);
-  if (saved) {
-    try { 
-      state = JSON.parse(saved); 
-      console.log("📒 已由本機 localStorage 還原 state");
-    } catch (e) { 
-      console.error("解析本機資料失敗：", e); 
+  function loadStateLocal() {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      try { state = JSON.parse(saved); }
+      catch (e) { console.error("解析本機資料失敗", e); }
     }
   }
-}
 
-/* 本機儲存 */
-function saveStateLocal() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-}
-
-/* 雲端：儲存 Firestore（每次 saveState 時，如果已登入就 upload） */
-async function saveStateToCloud() {
-  if (!db || !currentUser) return;
-  try {
-    const ref = doc(db, "users", currentUser.uid, "classes", "default");
-    await setDoc(ref, { state }, { merge: true });
-    console.log("☁️ 已儲存到雲端 Firestore");
-  } catch (e) {
-    console.error("儲存到雲端失敗", e);
+  function saveStateLocal() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   }
-}
 
-/* 雲端：載入 Firestore 覆蓋本機 */
-async function loadStateFromCloud() {
-  if (!db || !currentUser) return;
-  try {
-    const ref = doc(db, "users", currentUser.uid, "classes", "default");
-    const snap = await getDoc(ref);
-    if (snap.exists()) {
-      const data = snap.data();
-      if (data && data.state) {
-        state = data.state;
-        saveStateLocal();
-        console.log("☁️ 已用雲端 state 覆蓋本機");
-        rerenderAll();
+  async function loadStateFromCloud() {
+    if (!db || !currentUser) return;
+    try {
+      const ref = doc(db, "users", currentUser.uid, "classes", "default");
+      const snap = await getDoc(ref);
+      if (snap.exists()) {
+        const data = snap.data();
+        if (data && data.state) {
+          state = data.state;
+          saveStateLocal();
+          console.log("☁️ 已由雲端覆蓋 state");
+        }
+      } else {
+        // 第一次登入，用現時 state 建立雲端
+        await setDoc(ref, { state }, { merge: true });
+        console.log("☁️ 雲端首次建立 state");
       }
-    } else {
-      // 第一次登入，用本機 state 建立雲端
+    } catch (e) {
+      console.error("從雲端載入失敗", e);
+    }
+  }
+
+  async function saveStateToCloud() {
+    if (!db || !currentUser) return;
+    try {
+      const ref = doc(db, "users", currentUser.uid, "classes", "default");
       await setDoc(ref, { state }, { merge: true });
-      console.log("☁️ 雲端未有資料，已以本機 state 建立");
+      console.log("☁️ 已儲存 state 到雲端");
+    } catch (e) {
+      console.error("儲存到雲端失敗", e);
     }
-  } catch (e) {
-    console.error("從雲端載入失敗", e);
   }
-}
 
-/* 統一儲存：本機 + 雲端 */
-function saveState() {
-  saveStateLocal();
-  saveStateToCloud();
-}
+  function saveState() {
+    saveStateLocal();
+    // 非同步推上雲端（有登入先會做）
+    saveStateToCloud();
+  }
 
-/* 初始啟動用：只載入本機，雲端交畀 onAuthStateChanged 處理 */
-function loadState() {
-  loadStateLocal();
-}
+  function rerenderAll() {
+    renderIndividual();
+    renderGroups();
+    renderGroupRanking();
+    renderDangerZone();
+    renderHomeworkList();
+  }
 
-/* 一次過 rerender */
-function rerenderAll() {
-  renderIndividual();
-  renderGroups();
-  renderGroupRanking();
-  renderDangerZone();
-  renderHomeworkList();
-}
+  /* ================= Tabs ================= */
+  function initTabs() {
+    const tabs = document.querySelectorAll(".tab-btn");
+    const pages = document.querySelectorAll(".page");
 
-/* ================= Tabs ================= */
-function initTabs() {
-  const tabs = document.querySelectorAll(".tab-btn");
-  const pages = document.querySelectorAll(".page");
-
-  tabs.forEach(btn => {
-    btn.addEventListener("click", () => {
-      const target = btn.dataset.page;
-      tabs.forEach(b => b.classList.remove("active"));
-      btn.classList.add("active");
-      pages.forEach(p => p.classList.toggle("active", p.id === target));
+    tabs.forEach(btn => {
+      btn.addEventListener("click", () => {
+        const target = btn.dataset.page;
+        tabs.forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        pages.forEach(p => p.classList.toggle("active", p.id === target));
+      });
     });
-  });
-}
+  }
 
-/* ================= 登入 UI ================= */
-function initAuthUI() {
-  const userInfo = document.getElementById("userInfo");
-  const loginBtn = document.getElementById("loginBtn");
-  const logoutBtn = document.getElementById("logoutBtn");
+  /* ================= 登入 UI + 同步 ================= */
+  function initAuthUI() {
+    const userInfo = document.getElementById("userInfo");
+    const loginBtn = document.getElementById("loginBtn");
+    const logoutBtn = document.getElementById("logoutBtn");
+    const syncBtn = document.getElementById("syncBtn");
 
-  loginBtn.onclick = async () => {
-    const provider = new GoogleAuthProvider();
-    try {
-      await signInWithPopup(auth, provider);
-    } catch (err) {
-      alert("登入失敗：" + (err.message || err));
-    }
-  };
+    loginBtn.onclick = async () => {
+      const provider = new GoogleAuthProvider();
+      try {
+        await signInWithPopup(auth, provider);
+      } catch (err) {
+        alert("登入失敗：" + (err.message || err));
+      }
+    };
 
-  logoutBtn.onclick = async () => {
-    try {
-      await signOut(auth);
-    } catch (err) {
-      alert("登出失敗：" + (err.message || err));
-    }
-  };
+    logoutBtn.onclick = async () => {
+      try {
+        await signOut(auth);
+      } catch (err) {
+        alert("登出失敗：" + (err.message || err));
+      }
+    };
 
-  onAuthStateChanged(auth, async (user) => {
-    currentUser = user;
-    if (user) {
-      userInfo.innerHTML = `已登入：<strong>${user.displayName || user.email}</strong>`;
-      loginBtn.style.display = "none";
-      logoutBtn.style.display = "inline-block";
+    syncBtn.onclick = async () => {
+      if (!currentUser) {
+        alert("請先登入 Google，才可以從雲端同步。");
+        return;
+      }
       await loadStateFromCloud();
-    } else {
-      userInfo.textContent = "未登入（使用本機儲存）";
-      loginBtn.style.display = "inline-block";
-      logoutBtn.style.display = "none";
-    }
-  });
-}
+      rerenderAll();
+      alert("已由雲端重新載入最新資料。");
+    };
 
-/* ================= 個人積分 ================= */
-function addStudent() {
-  const seatInput = document.getElementById("newSeat");
-  const nameInput = document.getElementById("newName");
-  const seat = seatInput.value.trim();
-  const name = nameInput.value.trim();
-  if (!seat || !name) {
-    alert("請輸入座號與姓名");
-    return;
-  }
-
-  const id = Date.now();
-
-  state.students.push({
-    id,
-    seat: Number(seat),
-    name,
-    totalScore: 0,
-    individualGroupScoreToday: 0
-  });
-
-  state.homeworks.forEach(hw => {
-    hw.status[id] = "未繳交";
-  });
-
-  saveState();
-  rerenderAll();
-
-  seatInput.value = "";
-  nameInput.value = "";
-}
-
-function changePersonalScore(id, delta) {
-  const stu = state.students.find(s => s.id === id);
-  if (!stu) return;
-  stu.totalScore = Math.max(0, stu.totalScore + delta);
-  saveState();
-  renderIndividual();
-}
-
-function redeemCard(id) {
-  const stu = state.students.find(s => s.id === id);
-  if (!stu) return;
-  if (stu.totalScore < 5) {
-    alert("不足 5 分，不能兌換！");
-    return;
-  }
-  stu.totalScore -= 5;
-  saveState();
-  renderIndividual();
-}
-
-function editStudent(id) {
-  const stu = state.students.find(s => s.id === id);
-  if (!stu) return;
-
-  const newSeat = prompt("修改座號：", stu.seat);
-  if (newSeat === null) return;
-  const newName = prompt("修改名字：", stu.name);
-  if (newName === null) return;
-
-  stu.seat = Number(newSeat.trim());
-  stu.name = newName.trim();
-
-  saveState();
-  rerenderAll();
-}
-
-function deleteStudent(id) {
-  if (!confirm("確定要刪除這位學生？")) return;
-
-  state.students = state.students.filter(s => s.id !== id);
-  state.groups.forEach(g => {
-    g.memberIds = g.memberIds.filter(sid => sid !== id);
-  });
-  state.homeworks.forEach(hw => {
-    delete hw.status[id];
-    hw.awarded = hw.awarded.filter(x => x !== id);
-  });
-
-  saveState();
-  rerenderAll();
-}
-
-function renderIndividual() {
-  const box = document.getElementById("individualList");
-  if (!box) return;
-  box.innerHTML = "";
-
-  const sorted = [...state.students].sort((a,b) => a.seat - b.seat);
-
-  sorted.forEach(stu => {
-    const div = document.createElement("div");
-    div.className = "student-card";
-
-    div.innerHTML = `
-      <div class="between">
-        <strong>${stu.seat}. ${stu.name}</strong>
-        <div style="display:flex;align-items:center;">
-          <span class="edit-btn" onclick="editStudent(${stu.id})">✏️</span>
-          <span class="delete-btn" onclick="deleteStudent(${stu.id})">❌</span>
-        </div>
-      </div>
-
-      <div style="display:flex;justify-content:center;align-items:center;gap:10px;margin-top:6px;">
-        <button class="minus-btn" onclick="changePersonalScore(${stu.id}, -1)">−</button>
-        <span class="score-num">${stu.totalScore}</span>
-        <button class="plus-btn" onclick="changePersonalScore(${stu.id}, 1)">＋</button>
-      </div>
-
-      <button class="btn-primary" style="margin-top:6px;width:100%;border-radius:8px;"
-        onclick="redeemCard(${stu.id})">
-        兌換一張卡（-5 分）
-      </button>
-    `;
-
-    box.appendChild(div);
-  });
-}
-
-/* ================= 小組積分 ================= */
-function addGroup() {
-  state.groups.push({
-    id: Date.now(),
-    name: "新增小組",
-    memberIds: [],
-    groupScore: 0
-  });
-  saveState();
-  renderGroups();
-  renderGroupRanking();
-  renderDangerZone();
-}
-
-function deleteGroup(gid) {
-  if (!confirm("確定要刪除這個小組？")) return;
-
-  const g = state.groups.find(x => x.id === gid);
-  if (!g) return;
-
-  g.memberIds.forEach(sid => {
-    const stu = state.students.find(s => s.id === sid);
-    if (stu) stu.individualGroupScoreToday = 0;
-  });
-
-  state.groups = state.groups.filter(x => x.id !== gid);
-
-  saveState();
-  renderGroups();
-  renderGroupRanking();
-  renderDangerZone();
-}
-
-function renderGroups() {
-  const groupBox = document.getElementById("groupList");
-  const ungroupedBox = document.getElementById("ungroupedList");
-  if (!groupBox || !ungroupedBox) return;
-
-  groupBox.innerHTML = "";
-  ungroupedBox.innerHTML = "";
-
-  // 左邊：未分組學生
-  state.students.forEach(stu => {
-    const inGroup = state.groups.some(g => g.memberIds.includes(stu.id));
-    if (!inGroup) {
-      const card = document.createElement("div");
-      card.className = "student-card";
-      card.draggable = true;
-      card.dataset.sid = stu.id;
-      card.innerHTML = `<strong>${stu.seat}. ${stu.name}</strong>`;
-      ungroupedBox.appendChild(card);
-    }
-  });
-
-  // 右邊：小組
-  state.groups.forEach(g => {
-    const div = document.createElement("div");
-    div.className = "group-card";
-    div.dataset.gid = g.id;
-
-    g.groupScore = g.memberIds
-      .map(id => state.students.find(s => s.id === id)?.individualGroupScoreToday || 0)
-      .reduce((a, b) => a + b, 0);
-
-    let members = g.memberIds
-      .map(id => state.students.find(s => s.id === id))
-      .filter(Boolean)
-      .sort((a,b) => a.seat - b.seat);
-
-    let membersHTML = "";
-    for (let i = 0; i < members.length; i += 2) {
-      const m1 = members[i];
-      const m2 = members[i + 1];
-      membersHTML += `
-        <div class="group-members-row">
-          ${renderMemberCard(m1)}
-          ${m2 ? renderMemberCard(m2) : ""}
-        </div>
-      `;
-    }
-
-    div.innerHTML = `
-      <div class="between">
-        <input value="${g.name}"
-          onchange="renameGroup(${g.id}, this.value)"
-          style="border:none;font-size:16px;font-weight:bold;">
-
-        <div style="display:flex;align-items:center;gap:10px;">
-          <strong>${g.groupScore} 分</strong>
-          <span style="cursor:pointer;font-size:20px;color:#dc2626;"
-            onclick="deleteGroup(${g.id}); event.stopPropagation();">
-            🗑
-          </span>
-        </div>
-      </div>
-
-      <div class="group-members-grid">
-        ${membersHTML}
-      </div>
-
-      <button class="btn-primary" style="margin-top:8px;" onclick="settleGroup(${g.id})">
-        結算
-      </button>
-    `;
-
-    groupBox.appendChild(div);
-  });
-
-  enableDrag();
-}
-
-function renameGroup(id, name) {
-  const g = state.groups.find(x => x.id === id);
-  if (!g) return;
-  g.name = name.trim();
-  saveState();
-}
-
-function renderMemberCard(stu) {
-  if (!stu) return "";
-  return `
-    <div class="group-member-card" draggable="true" data-sid="${stu.id}">
-      <div class="group-member-name">${stu.seat}. ${stu.name}</div>
-
-      <div class="group-member-controls">
-        <button class="minus-btn"
-          onclick="changeGroupMemberScore(${stu.id}, -1); event.stopPropagation();">−</button>
-
-        <span class="group-member-score">${stu.individualGroupScoreToday}</span>
-
-        <button class="plus-btn"
-          onclick="changeGroupMemberScore(${stu.id}, 1); event.stopPropagation();">＋</button>
-      </div>
-    </div>
-  `;
-}
-
-function enableDrag() {
-  const draggables = document.querySelectorAll("[draggable='true'][data-sid]");
-  const groupCards = document.querySelectorAll(".group-card");
-  const ungrouped = document.getElementById("ungroupedList");
-
-  draggables.forEach(el => {
-    el.addEventListener("dragstart", e => {
-      e.dataTransfer.setData("sid", el.dataset.sid);
-    });
-  });
-
-  groupCards.forEach(card => {
-    card.addEventListener("dragover", e => e.preventDefault());
-    card.addEventListener("drop", e => {
-      e.preventDefault();
-      const sid = Number(e.dataTransfer.getData("sid"));
-      const gid = Number(card.dataset.gid);
-      moveStudentToGroup(sid, gid);
-    });
-  });
-
-  if (ungrouped) {
-    ungrouped.addEventListener("dragover", e => e.preventDefault());
-    ungrouped.addEventListener("drop", e => {
-      e.preventDefault();
-      const sid = Number(e.dataTransfer.getData("sid"));
-      removeFromGroup(sid);
+    onAuthStateChanged(auth, async (user) => {
+      currentUser = user;
+      if (user) {
+        userInfo.innerHTML = `已登入：<strong>${user.displayName || user.email}</strong>`;
+        loginBtn.style.display = "none";
+        logoutBtn.style.display = "inline-block";
+        await loadStateFromCloud();
+        rerenderAll();
+      } else {
+        userInfo.textContent = "未登入（使用本機儲存）";
+        loginBtn.style.display = "inline-block";
+        logoutBtn.style.display = "none";
+      }
     });
   }
-}
 
-function moveStudentToGroup(sid, gid) {
-  state.groups.forEach(g => {
-    g.memberIds = g.memberIds.filter(x => x !== sid);
-  });
+  /* ================= 個人積分 ================= */
+  function addStudent() {
+    const seatInput = document.getElementById("newSeat");
+    const nameInput = document.getElementById("newName");
+    const seat = seatInput.value.trim();
+    const name = nameInput.value.trim();
+    if (!seat || !name) {
+      alert("請輸入座號與姓名");
+      return;
+    }
 
-  const target = state.groups.find(g => g.id === gid);
-  if (!target) return;
-  target.memberIds.push(sid);
+    const id = Date.now();
 
-  saveState();
-  renderGroups();
-  renderGroupRanking();
-  renderDangerZone();
-}
+    state.students.push({
+      id,
+      seat: Number(seat),
+      name,
+      totalScore: 0,
+      individualGroupScoreToday: 0
+    });
 
-function removeFromGroup(sid) {
-  state.groups.forEach(g => {
-    g.memberIds = g.memberIds.filter(x => x !== sid);
-  });
+    state.homeworks.forEach(hw => {
+      hw.status[id] = "未繳交";
+    });
 
-  const stu = state.students.find(s => s.id === sid);
-  if (stu) stu.individualGroupScoreToday = 0;
+    saveState();
+    rerenderAll();
 
-  saveState();
-  renderGroups();
-  renderGroupRanking();
-  renderDangerZone();
-}
-
-function changeGroupMemberScore(id, delta) {
-  const stu = state.students.find(s => s.id === id);
-  if (!stu) return;
-  stu.individualGroupScoreToday = Math.max(0, stu.individualGroupScoreToday + delta);
-  saveState();
-  renderGroups();
-  renderGroupRanking();
-  renderDangerZone();
-}
-
-function settleGroup(gid) {
-  const g = state.groups.find(x => x.id === gid);
-  if (!g) return;
-  const score = g.memberIds
-    .map(id => state.students.find(s => s.id === id)?.individualGroupScoreToday || 0)
-    .reduce((a,b) => a + b, 0);
-  if (score === 0) {
-    alert("組分為 0，不能結算");
-    return;
+    seatInput.value = "";
+    nameInput.value = "";
   }
 
-  g.memberIds.forEach(id => {
+  function changePersonalScore(id, delta) {
     const stu = state.students.find(s => s.id === id);
     if (!stu) return;
-    stu.totalScore += score;
-    stu.individualGroupScoreToday = 0;
-  });
+    stu.totalScore = Math.max(0, stu.totalScore + delta);
+    saveState();
+    renderIndividual();
+  }
 
-  saveState();
-  renderGroups();
-  renderIndividual();
-  renderDangerZone();
-}
+  function redeemCard(id) {
+    const stu = state.students.find(s => s.id === id);
+    if (!stu) return;
+    if (stu.totalScore < 5) {
+      alert("不足 5 分，不能兌換！");
+      return;
+    }
+    stu.totalScore -= 5;
+    saveState();
+    renderIndividual();
+  }
 
-/* 分組排名 */
-function renderGroupRanking() {
-  const box = document.getElementById("groupRanking");
-  if (!box) return;
-  box.innerHTML = "";
+  function editStudent(id) {
+    const stu = state.students.find(s => s.id === id);
+    if (!stu) return;
 
-  const rank = state.groups.map(g => {
+    const newSeat = prompt("修改座號：", stu.seat);
+    if (newSeat === null) return;
+    const newName = prompt("修改名字：", stu.name);
+    if (newName === null) return;
+
+    stu.seat = Number(newSeat.trim());
+    stu.name = newName.trim();
+
+    saveState();
+    rerenderAll();
+  }
+
+  function deleteStudent(id) {
+    if (!confirm("確定要刪除這位學生？")) return;
+
+    state.students = state.students.filter(s => s.id !== id);
+    state.groups.forEach(g => {
+      g.memberIds = g.memberIds.filter(sid => sid !== id);
+    });
+    state.homeworks.forEach(hw => {
+      delete hw.status[id];
+      hw.awarded = hw.awarded.filter(x => x !== id);
+    });
+
+    saveState();
+    rerenderAll();
+  }
+
+  function renderIndividual() {
+    const box = document.getElementById("individualList");
+    if (!box) return;
+    box.innerHTML = "";
+
+    const sorted = [...state.students].sort((a,b) => a.seat - b.seat);
+
+    sorted.forEach(stu => {
+      const div = document.createElement("div");
+      div.className = "student-card";
+
+      div.innerHTML = `
+        <div class="between">
+          <strong>${stu.seat}. ${stu.name}</strong>
+          <div style="display:flex;align-items:center;">
+            <span class="edit-btn" onclick="editStudent(${stu.id})">✏️</span>
+            <span class="delete-btn" onclick="deleteStudent(${stu.id})">❌</span>
+          </div>
+        </div>
+
+        <div style="display:flex;justify-content:center;align-items:center;gap:10px;margin-top:6px;">
+          <button class="minus-btn" onclick="changePersonalScore(${stu.id}, -1)">−</button>
+          <span class="score-num">${stu.totalScore}</span>
+          <button class="plus-btn" onclick="changePersonalScore(${stu.id}, 1)">＋</button>
+        </div>
+
+        <button class="btn-primary" style="margin-top:6px;width:100%;border-radius:8px;"
+          onclick="redeemCard(${stu.id})">
+          兌換一張卡（-5 分）
+        </button>
+      `;
+
+      box.appendChild(div);
+    });
+  }
+
+  /* ================= 小組積分 ================= */
+  function addGroup() {
+    state.groups.push({
+      id: Date.now(),
+      name: "新增小組",
+      memberIds: [],
+      groupScore: 0
+    });
+    saveState();
+    renderGroups();
+    renderGroupRanking();
+    renderDangerZone();
+  }
+
+  function deleteGroup(gid) {
+    if (!confirm("確定要刪除這個小組？")) return;
+
+    const g = state.groups.find(x => x.id === gid);
+    if (!g) return;
+
+    g.memberIds.forEach(sid => {
+      const stu = state.students.find(s => s.id === sid);
+      if (stu) stu.individualGroupScoreToday = 0;
+    });
+
+    state.groups = state.groups.filter(x => x.id !== gid);
+
+    saveState();
+    renderGroups();
+    renderGroupRanking();
+    renderDangerZone();
+  }
+
+  function renderGroups() {
+    const groupBox = document.getElementById("groupList");
+    const ungroupedBox = document.getElementById("ungroupedList");
+    if (!groupBox || !ungroupedBox) return;
+
+    groupBox.innerHTML = "";
+    ungroupedBox.innerHTML = "";
+
+    // 未分組學生
+    state.students.forEach(stu => {
+      const inGroup = state.groups.some(g => g.memberIds.includes(stu.id));
+      if (!inGroup) {
+        const card = document.createElement("div");
+        card.className = "student-card";
+        card.draggable = true;
+        card.dataset.sid = stu.id;
+        card.innerHTML = `<strong>${stu.seat}. ${stu.name}</strong>`;
+        ungroupedBox.appendChild(card);
+      }
+    });
+
+    // 小組
+    state.groups.forEach(g => {
+      const div = document.createElement("div");
+      div.className = "group-card";
+      div.dataset.gid = g.id;
+
+      g.groupScore = g.memberIds
+        .map(id => state.students.find(s => s.id === id)?.individualGroupScoreToday || 0)
+        .reduce((a, b) => a + b, 0);
+
+      let members = g.memberIds
+        .map(id => state.students.find(s => s.id === id))
+        .filter(Boolean)
+        .sort((a,b) => a.seat - b.seat);
+
+      let membersHTML = "";
+      for (let i = 0; i < members.length; i += 2) {
+        const m1 = members[i];
+        const m2 = members[i + 1];
+        membersHTML += `
+          <div class="group-members-row">
+            ${renderMemberCard(m1)}
+            ${m2 ? renderMemberCard(m2) : ""}
+          </div>
+        `;
+      }
+
+      div.innerHTML = `
+        <div class="between">
+          <input value="${g.name}"
+            onchange="renameGroup(${g.id}, this.value)"
+            style="border:none;font-size:16px;font-weight:bold;">
+
+          <div style="display:flex;align-items:center;gap:10px;">
+            <strong>${g.groupScore} 分</strong>
+            <span style="cursor:pointer;font-size:20px;color:#dc2626;"
+              onclick="deleteGroup(${g.id}); event.stopPropagation();">
+              🗑
+            </span>
+          </div>
+        </div>
+
+        <div class="group-members-grid">
+          ${membersHTML}
+        </div>
+
+        <button class="btn-primary" style="margin-top:8px;" onclick="settleGroup(${g.id})">
+          結算
+        </button>
+      `;
+
+      groupBox.appendChild(div);
+    });
+
+    enableDrag();
+  }
+
+  function renameGroup(id, name) {
+    const g = state.groups.find(x => x.id === id);
+    if (!g) return;
+    g.name = name.trim();
+    saveState();
+  }
+
+  function renderMemberCard(stu) {
+    if (!stu) return "";
+    return `
+      <div class="group-member-card" draggable="true" data-sid="${stu.id}">
+        <div class="group-member-name">${stu.seat}. ${stu.name}</div>
+
+        <div class="group-member-controls">
+          <button class="minus-btn"
+            onclick="changeGroupMemberScore(${stu.id}, -1); event.stopPropagation();">−</button>
+
+          <span class="group-member-score">${stu.individualGroupScoreToday}</span>
+
+          <button class="plus-btn"
+            onclick="changeGroupMemberScore(${stu.id}, 1); event.stopPropagation();">＋</button>
+        </div>
+      </div>
+    `;
+  }
+
+  function enableDrag() {
+    const draggables = document.querySelectorAll("[draggable='true'][data-sid]");
+    const groupCards = document.querySelectorAll(".group-card");
+    const ungrouped = document.getElementById("ungroupedList");
+
+    draggables.forEach(el => {
+      el.addEventListener("dragstart", e => {
+        e.dataTransfer.setData("sid", el.dataset.sid);
+      });
+    });
+
+    groupCards.forEach(card => {
+      card.addEventListener("dragover", e => e.preventDefault());
+      card.addEventListener("drop", e => {
+        e.preventDefault();
+        const sid = Number(e.dataTransfer.getData("sid"));
+        const gid = Number(card.dataset.gid);
+        moveStudentToGroup(sid, gid);
+      });
+    });
+
+    if (ungrouped) {
+      ungrouped.addEventListener("dragover", e => e.preventDefault());
+      ungrouped.addEventListener("drop", e => {
+        e.preventDefault();
+        const sid = Number(e.dataTransfer.getData("sid"));
+        removeFromGroup(sid);
+      });
+    }
+  }
+
+  function moveStudentToGroup(sid, gid) {
+    state.groups.forEach(g => {
+      g.memberIds = g.memberIds.filter(x => x !== sid);
+    });
+
+    const target = state.groups.find(g => g.id === gid);
+    if (!target) return;
+    target.memberIds.push(sid);
+
+    saveState();
+    renderGroups();
+    renderGroupRanking();
+    renderDangerZone();
+  }
+
+  function removeFromGroup(sid) {
+    state.groups.forEach(g => {
+      g.memberIds = g.memberIds.filter(x => x !== sid);
+    });
+
+    const stu = state.students.find(s => s.id === sid);
+    if (stu) stu.individualGroupScoreToday = 0;
+
+    saveState();
+    renderGroups();
+    renderGroupRanking();
+    renderDangerZone();
+  }
+
+  function changeGroupMemberScore(id, delta) {
+    const stu = state.students.find(s => s.id === id);
+    if (!stu) return;
+    stu.individualGroupScoreToday = Math.max(0, stu.individualGroupScoreToday + delta);
+    saveState();
+    renderGroups();
+    renderGroupRanking();
+    renderDangerZone();
+  }
+
+  function settleGroup(gid) {
+    const g = state.groups.find(x => x.id === gid);
+    if (!g) return;
     const score = g.memberIds
       .map(id => state.students.find(s => s.id === id)?.individualGroupScoreToday || 0)
       .reduce((a,b) => a + b, 0);
-    return { name: g.name, score };
-  }).sort((a,b) => b.score - a.score);
-
-  rank.forEach((g,i) => {
-    const div = document.createElement("div");
-    div.textContent = `第 ${i+1} 名：${g.name}（${g.score} 分）`;
-    box.appendChild(div);
-  });
-}
-
-/* 危險區：今日 0 分 */
-function renderDangerZone() {
-  const box = document.getElementById("dangerZone");
-  if (!box) return;
-  box.innerHTML = "";
-
-  const zero = state.students.filter(s => s.individualGroupScoreToday === 0);
-  if (zero.length === 0) {
-    box.textContent = "暫時沒有人在危險區 👍";
-    return;
-  }
-
-  zero.forEach(stu => {
-    const div = document.createElement("div");
-    div.textContent = `${stu.seat}. ${stu.name}（0 分）`;
-    box.appendChild(div);
-  });
-}
-
-/* 抽籤 */
-function drawLottery() {
-  const numInput = document.getElementById("lotteryNum");
-  const out = document.getElementById("lotteryResult");
-  const n = Number(numInput.value);
-  if (!n || n <= 0) {
-    alert("請輸入抽出人數");
-    return;
-  }
-  if (n > state.students.length) {
-    alert("學生人數不足");
-    return;
-  }
-  const pool = [...state.students];
-  const result = [];
-  while (result.length < n) {
-    const idx = Math.floor(Math.random() * pool.length);
-    result.push(pool.splice(idx,1)[0]);
-  }
-  out.textContent = result.map(s => `${s.seat}. ${s.name}`).join("、");
-}
-
-/* ================= 作業系統 ================= */
-function addHomework() {
-  const input = document.getElementById("newHomeworkTitle");
-  const title = input.value.trim();
-  if (!title) {
-    alert("請輸入功課名稱");
-    return;
-  }
-  const id = Date.now();
-  const hw = {
-    id,
-    title,
-    status: {},
-    awarded: []  // 已經派過準時交 +1 的學生 id
-  };
-  state.students.forEach(s => {
-    hw.status[s.id] = "未繳交";
-  });
-
-  state.homeworks.push(hw);
-  saveState();
-  input.value = "";
-  renderHomeworkList();
-  openHomework(id);
-}
-
-function renderHomeworkList() {
-  const box = document.getElementById("homeworkList");
-  if (!box) return;
-  box.innerHTML = "";
-
-  state.homeworks.forEach(hw => {
-    const submittedCount = Object.values(hw.status)
-      .filter(s => s === "已繳交" || s === "待訂正" || s === "已訂正").length;
-    const correctedCount = Object.values(hw.status)
-      .filter(s => s === "已訂正").length;
-    const total = state.students.length;
-
-    const div = document.createElement("div");
-    div.className = "hw-card";
-    div.innerHTML = `
-      <div class="between" style="cursor:pointer;" onclick="openHomework(${hw.id})">
-        <strong>${hw.title}</strong>
-        <div style="text-align:right;font-size:14px;">
-          <div>${submittedCount}/${total} 已繳交</div>
-          <div>${correctedCount}/${total} 已訂正</div>
-        </div>
-      </div>
-    `;
-    box.appendChild(div);
-  });
-}
-
-/* Modal 相關 */
-let currentHW = null;
-
-function openHomework(id) {
-  currentHW = state.homeworks.find(h => h.id === id);
-  if (!currentHW) return;
-
-  document.getElementById("hwModalTitle").textContent = currentHW.title;
-  const list = document.getElementById("hwModalList");
-  list.innerHTML = "";
-
-  const sorted = [...state.students].sort((a,b) => a.seat - b.seat);
-
-  sorted.forEach(stu => {
-    const card = document.createElement("div");
-    card.className = "hw-stu-card";
-    card.dataset.sid = stu.id;
-
-    const status = currentHW.status[stu.id] || "未繳交";
-    const awarded = currentHW.awarded.includes(stu.id);
-
-    const circleClasses = ["circle-check"];
-    if (awarded) circleClasses.push("awarded");
-
-    card.innerHTML = `
-      <div class="${circleClasses.join(" ")}"
-           onclick="toggleCheck(${stu.id})"></div>
-      <strong style="font-size:15px;">${stu.seat}. ${stu.name}</strong>
-      <br>
-      <button class="status-btn status-${status}" onclick="changeHWStatus(${stu.id})">
-        ${status}
-      </button>
-    `;
-
-    list.appendChild(card);
-  });
-
-  document.getElementById("hwModalBG").style.display = "flex";
-}
-
-function closeModal() {
-  document.getElementById("hwModalBG").style.display = "none";
-}
-
-function changeHWStatus(sid) {
-  if (!currentHW) return;
-  const order = ["未繳交","已繳交","待訂正","已訂正"];
-  const cur = currentHW.status[sid] || "未繳交";
-  const idx = order.indexOf(cur);
-  currentHW.status[sid] = order[(idx + 1) % order.length];
-  saveState();
-  renderHomeworkList();
-  openHomework(currentHW.id);
-}
-
-function toggleCheck(sid) {
-  if (!currentHW) return;
-
-  const card = document.querySelector(`.hw-stu-card[data-sid="${sid}"]`);
-  if (!card) return;
-
-  const circle = card.querySelector(".circle-check");
-
-  // 已派過 bonus → 不可再點
-  if (currentHW.awarded.includes(sid)) return;
-
-  circle.classList.toggle("checked");
-}
-
-function awardOnTime() {
-  if (!currentHW) return;
-
-  const listEl = document.getElementById("hwModalList");
-  const cards = listEl.querySelectorAll(".hw-stu-card");
-
-  cards.forEach(card => {
-    const sid = Number(card.dataset.sid);
-    const circle = card.querySelector(".circle-check");
-    if (circle.classList.contains("checked") && !currentHW.awarded.includes(sid)) {
-      const stu = state.students.find(s => s.id === sid);
-      if (stu) {
-        stu.totalScore += 1;
-        currentHW.awarded.push(sid);
-      }
+    if (score === 0) {
+      alert("組分為 0，不能結算");
+      return;
     }
+
+    g.memberIds.forEach(id => {
+      const stu = state.students.find(s => s.id === id);
+      if (!stu) return;
+      stu.totalScore += score;
+      stu.individualGroupScoreToday = 0;
+    });
+
+    saveState();
+    renderGroups();
+    renderIndividual();
+    renderDangerZone();
+  }
+
+  /* 分組排名 */
+  function renderGroupRanking() {
+    const box = document.getElementById("groupRanking");
+    if (!box) return;
+    box.innerHTML = "";
+
+    const rank = state.groups.map(g => {
+      const score = g.memberIds
+        .map(id => state.students.find(s => s.id === id)?.individualGroupScoreToday || 0)
+        .reduce((a,b) => a + b, 0);
+      return { name: g.name, score };
+    }).sort((a,b) => b.score - a.score);
+
+    rank.forEach((g,i) => {
+      const div = document.createElement("div");
+      div.textContent = `第 ${i+1} 名：${g.name}（${g.score} 分）`;
+      box.appendChild(div);
+    });
+  }
+
+  /* 危險區：今日 0 分 */
+  function renderDangerZone() {
+    const box = document.getElementById("dangerZone");
+    if (!box) return;
+    box.innerHTML = "";
+
+    const zero = state.students.filter(s => s.individualGroupScoreToday === 0);
+    if (zero.length === 0) {
+      box.textContent = "暫時沒有人在危險區 👍";
+      return;
+    }
+
+    zero.forEach(stu => {
+      const div = document.createElement("div");
+      div.textContent = `${stu.seat}. ${stu.name}（0 分）`;
+      box.appendChild(div);
+    });
+  }
+
+  /* 抽籤 */
+  function drawLottery() {
+    const numInput = document.getElementById("lotteryNum");
+    const out = document.getElementById("lotteryResult");
+    const n = Number(numInput.value);
+    if (!n || n <= 0) {
+      alert("請輸入抽出人數");
+      return;
+    }
+    if (n > state.students.length) {
+      alert("學生人數不足");
+      return;
+    }
+    const pool = [...state.students];
+    const result = [];
+    while (result.length < n) {
+      const idx = Math.floor(Math.random() * pool.length);
+      result.push(pool.splice(idx,1)[0]);
+    }
+    out.textContent = result.map(s => `${s.seat}. ${s.name}`).join("、");
+  }
+
+  /* ================= 作業系統 ================= */
+  function addHomework() {
+    const input = document.getElementById("newHomeworkTitle");
+    const title = input.value.trim();
+    if (!title) {
+      alert("請輸入功課名稱");
+      return;
+    }
+    const id = Date.now();
+    const hw = {
+      id,
+      title,
+      status: {},
+      awarded: []  // 已經派過準時交 +1 的學生 id
+    };
+    state.students.forEach(s => {
+      hw.status[s.id] = "未繳交";
+    });
+
+    state.homeworks.push(hw);
+    saveState();
+    input.value = "";
+    renderHomeworkList();
+    openHomework(id);
+  }
+
+  function renderHomeworkList() {
+    const box = document.getElementById("homeworkList");
+    if (!box) return;
+    box.innerHTML = "";
+
+    state.homeworks.forEach(hw => {
+      const submittedCount = Object.values(hw.status)
+        .filter(s => s === "已繳交" || s === "待訂正" || s === "已訂正").length;
+      const correctedCount = Object.values(hw.status)
+        .filter(s => s === "已訂正").length;
+      const total = state.students.length;
+
+      const div = document.createElement("div");
+      div.className = "hw-card";
+      div.innerHTML = `
+        <div class="between" style="cursor:pointer;" onclick="openHomework(${hw.id})">
+          <strong>${hw.title}</strong>
+          <div style="text-align:right;font-size:14px;">
+            <div>${submittedCount}/${total} 已繳交</div>
+            <div>${correctedCount}/${total} 已訂正</div>
+          </div>
+        </div>
+      `;
+      box.appendChild(div);
+    });
+  }
+
+  /* Modal 相關 */
+  let currentHW = null;
+
+  function openHomework(id) {
+    currentHW = state.homeworks.find(h => h.id === id);
+    if (!currentHW) return;
+
+    document.getElementById("hwModalTitle").textContent = currentHW.title;
+    const list = document.getElementById("hwModalList");
+    list.innerHTML = "";
+
+    const sorted = [...state.students].sort((a,b) => a.seat - b.seat);
+
+    sorted.forEach(stu => {
+      const card = document.createElement("div");
+      card.className = "hw-stu-card";
+      card.dataset.sid = stu.id;
+
+      const status = currentHW.status[stu.id] || "未繳交";
+      const awarded = currentHW.awarded.includes(stu.id);
+
+      const circleClasses = ["circle-check"];
+      if (awarded) circleClasses.push("awarded");
+
+      card.innerHTML = `
+        <div class="hw-left">
+          <strong class="hw-name">${stu.seat}. ${stu.name}</strong>
+          <button class="status-btn status-${status}" onclick="changeHWStatus(${stu.id})">
+            ${status}
+          </button>
+        </div>
+        <div class="${circleClasses.join(" ")}" onclick="toggleCheck(${stu.id})"></div>
+      `;
+
+      list.appendChild(card);
+    });
+
+    document.getElementById("hwModalBG").style.display = "flex";
+  }
+
+  function closeModal() {
+    document.getElementById("hwModalBG").style.display = "none";
+  }
+
+  function changeHWStatus(sid) {
+    if (!currentHW) return;
+    const order = ["未繳交","已繳交","待訂正","已訂正"];
+    const cur = currentHW.status[sid] || "未繳交";
+    const idx = order.indexOf(cur);
+    currentHW.status[sid] = order[(idx + 1) % order.length];
+    saveState();
+    renderHomeworkList();
+    openHomework(currentHW.id);
+  }
+
+  function toggleCheck(sid) {
+    if (!currentHW) return;
+
+    const card = document.querySelector(`.hw-stu-card[data-sid="${sid}"]`);
+    if (!card) return;
+
+    const circle = card.querySelector(".circle-check");
+
+    // 已派過 bonus → 不可再點
+    if (currentHW.awarded.includes(sid)) return;
+
+    circle.classList.toggle("checked");
+  }
+
+  function awardOnTime() {
+    if (!currentHW) return;
+
+    const listEl = document.getElementById("hwModalList");
+    const cards = listEl.querySelectorAll(".hw-stu-card");
+
+    cards.forEach(card => {
+      const sid = Number(card.dataset.sid);
+      const circle = card.querySelector(".circle-check");
+      if (circle.classList.contains("checked") && !currentHW.awarded.includes(sid)) {
+        const stu = state.students.find(s => s.id === sid);
+        if (stu) {
+          stu.totalScore += 1;
+          currentHW.awarded.push(sid);
+        }
+      }
+    });
+
+    saveState();
+    renderIndividual();
+    renderHomeworkList();
+    openHomework(currentHW.id); // 重新開啟，已派分變綠圈圈
+  }
+
+  function deleteHomework() {
+    if (!currentHW) return;
+    if (!confirm("確定要刪除此功課？")) return;
+    state.homeworks = state.homeworks.filter(h => h.id !== currentHW.id);
+    saveState();
+    currentHW = null;
+    closeModal();
+    renderHomeworkList();
+  }
+
+  /* ================= INIT ================= */
+  document.addEventListener("DOMContentLoaded", () => {
+    loadStateLocal();    // 先用本機資料
+    initTabs();
+    initAuthUI();
+    rerenderAll();
   });
 
-  saveState();
-  renderIndividual();
-  renderHomeworkList();
-  openHomework(currentHW.id); // 重新開啟，已派分變綠圈圈
-}
+  /* 把 function 掛到 window 方便 inline onclick 用 */
+  window.addStudent = addStudent;
+  window.changePersonalScore = changePersonalScore;
+  window.redeemCard = redeemCard;
+  window.editStudent = editStudent;
+  window.deleteStudent = deleteStudent;
 
-function deleteHomework() {
-  if (!currentHW) return;
-  if (!confirm("確定要刪除此功課？")) return;
-  state.homeworks = state.homeworks.filter(h => h.id !== currentHW.id);
-  saveState();
-  currentHW = null;
-  closeModal();
-  renderHomeworkList();
-}
+  window.addGroup = addGroup;
+  window.deleteGroup = deleteGroup;
+  window.changeGroupMemberScore = changeGroupMemberScore;
+  window.settleGroup = settleGroup;
+  window.renameGroup = renameGroup;
 
-/* ================= INIT ================= */
-document.addEventListener("DOMContentLoaded", () => {
-  loadState();      // 1️⃣ 先由本機還原
-  initTabs();       // 2️⃣ Tabs 切換
-  initAuthUI();     // 3️⃣ 啟動登入系統（如登入會再載雲端）
-  rerenderAll();    // 4️⃣ 畫面顯示一次
-  enableDrag();     // 5️⃣ 啟用拖拉
-});
+  window.drawLottery = drawLottery;
 
-/* 把部分 function 掛到 window 方便 inline onclick 用 */
-window.addStudent = addStudent;
-window.changePersonalScore = changePersonalScore;
-window.redeemCard = redeemCard;
-window.editStudent = editStudent;
-window.deleteStudent = deleteStudent;
-
-window.addGroup = addGroup;
-window.deleteGroup = deleteGroup;
-window.changeGroupMemberScore = changeGroupMemberScore;
-window.settleGroup = settleGroup;
-window.renameGroup = renameGroup;
-
-window.drawLottery = drawLottery;
-
-window.addHomework = addHomework;
-window.openHomework = openHomework;
-window.closeModal = closeModal;
-window.changeHWStatus = changeHWStatus;
-window.toggleCheck = toggleCheck;
-window.awardOnTime = awardOnTime;
-window.deleteHomework = deleteHomework;
+  window.addHomework = addHomework;
+  window.openHomework = openHomework;
+  window.closeModal = closeModal;
+  window.changeHWStatus = changeHWStatus;
+  window.toggleCheck = toggleCheck;
+  window.awardOnTime = awardOnTime;
+  window.deleteHomework = deleteHomework;
 </script>
 
 </body>
