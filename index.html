@@ -434,6 +434,21 @@
     font-size: 16px;
   }
 }
+    /* ✅ 小組摺疊模式：只顯示組名＋分數 */
+.group-card.collapsed {
+  padding: 6px 10px;
+}
+
+/* 摺疊時：隱藏組員列表 + 結算按鈕 */
+.group-card.collapsed .group-members-grid,
+.group-card.collapsed .group-settle-btn {
+  display: none;
+}
+
+/* 組名列可以點擊 */
+.group-header {
+  cursor: pointer;
+}
     
   </style>
 </head>
@@ -849,17 +864,18 @@
 
   /* ================= 小組積分 ================= */
   function addGroup() {
-    state.groups.push({
-      id: Date.now(),
-      name: "新增小組",
-      memberIds: [],
-      groupScore: 0
-    });
-    saveState();
-    renderGroups();
-    renderGroupRanking();
-    renderDangerZone();
-  }
+  state.groups.push({
+    id: Date.now(),
+    name: "新增小組",
+    memberIds: [],
+    groupScore: 0,
+    collapsed: false   // ✅ 新增：預設唔摺疊
+  });
+  saveState();
+  renderGroups();
+  renderGroupRanking();
+  renderDangerZone();
+}
 
   function deleteGroup(gid) {
     if (!confirm("確定要刪除這個小組？")) return;
@@ -903,9 +919,10 @@
 
     // 小組
     state.groups.forEach(g => {
-      const div = document.createElement("div");
-      div.className = "group-card";
-      div.dataset.gid = g.id;
+    const div = document.createElement("div");
+    const collapsedClass = g.collapsed ? " collapsed" : "";
+    div.className = "group-card" + collapsedClass;
+    div.dataset.gid = g.id;
 
       g.groupScore = g.memberIds
         .map(id => state.students.find(s => s.id === id)?.individualGroupScoreToday || 0)
@@ -929,28 +946,29 @@
       }
 
       div.innerHTML = `
-        <div class="between">
-          <input value="${g.name}"
-            onchange="renameGroup(${g.id}, this.value)"
-            style="border:none;font-size:16px;font-weight:bold;">
+  <div class="between group-header" onclick="toggleGroupCollapse(${g.id})">
+    <input value="${g.name}"
+      onchange="renameGroup(${g.id}, this.value)"
+      onclick="event.stopPropagation();"
+      style="border:none;font-size:16px;font-weight:bold;">
 
-          <div style="display:flex;align-items:center;gap:10px;">
-            <strong>${g.groupScore} 分</strong>
-            <span style="cursor:pointer;font-size:20px;color:#dc2626;"
-              onclick="deleteGroup(${g.id}); event.stopPropagation();">
-              🗑
-            </span>
-          </div>
-        </div>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <strong>${g.groupScore} 分</strong>
+      <span style="cursor:pointer;font-size:20px;color:#dc2626;"
+        onclick="deleteGroup(${g.id}); event.stopPropagation();">
+        🗑
+      </span>
+    </div>
+  </div>
 
-        <div class="group-members-grid">
-          ${membersHTML}
-        </div>
+  <div class="group-members-grid">
+    ${membersHTML}
+  </div>
 
-        <button class="btn-primary" style="margin-top:8px;" onclick="settleGroup(${g.id})">
-          結算
-        </button>
-      `;
+  <button class="btn-primary group-settle-btn" style="margin-top:8px;" onclick="settleGroup(${g.id})">
+    結算
+  </button>
+`;
 
       groupBox.appendChild(div);
     });
@@ -1077,7 +1095,14 @@
     renderIndividual();
     renderDangerZone();
   }
-
+  
+function toggleGroupCollapse(gid) {
+  const g = state.groups.find(x => x.id === gid);
+  if (!g) return;
+  g.collapsed = !g.collapsed;
+  saveState();
+  renderGroups();   // ⭐ 重新畫
+}
   /* 分組排名 */
   function renderGroupRanking() {
     const box = document.getElementById("groupRanking");
@@ -1427,6 +1452,7 @@
   window.toggleCheck = toggleCheck;
   window.awardOnTime = awardOnTime;
   window.deleteHomework = deleteHomework;
+  window.toggleGroupCollapse = toggleGroupCollapse;
 </script>
 
 </body>
