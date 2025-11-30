@@ -397,6 +397,44 @@
       box-shadow: 0 0 0 2px rgba(37,99,235,0.3);
       background: #eff6ff;
     }
+/* ✅ iPad 橫向 / 電腦：小組卡縮細一點，方便一次過看多幾組 */
+@media (min-width: 1024px) {
+  /* 小組列表：多啲欄、卡片細啲 */
+  .group-list-grid {
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 8px;
+  }
+
+  /* 整體卡片薄一點 */
+  .group-card {
+    padding: 10px;
+    margin-bottom: 8px;
+  }
+
+  /* 組員卡片縮細一點 */
+  .group-member-card {
+    padding: 6px 8px;
+    font-size: 14px;
+    min-height: 46px;
+  }
+
+  .group-member-name {
+    font-size: 14px;
+  }
+
+  .group-member-score {
+    font-size: 16px;
+    width: 26px;
+  }
+
+  .group-member-controls .plus-btn,
+  .group-member-controls .minus-btn {
+    width: 26px;
+    height: 26px;
+    font-size: 16px;
+  }
+}
+    
   </style>
 </head>
 
