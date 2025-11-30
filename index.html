@@ -159,13 +159,21 @@
       margin-bottom: 12px;
     }
 
-    /* 小組列表：兩欄並排 */
-    .group-list-grid {
-      display:grid;
-      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-      gap: 12px;
-      margin-top: 10px;
-    }
+    /* 小組列表：預設手機／細螢幕 1～2 欄 */
+.group-list-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 12px;
+  margin-top: 10px;
+}
+
+/* ✅ iPad 橫向 / 電腦：固定三欄 */
+@media (min-width: 1024px) {
+  .group-list-grid {
+    grid-template-columns: repeat(3, 1fr);  /* 一行 3 個小組 */
+    gap: 8px;
+  }
+}
 
     /* 小組學生：兩個一行 */
     .group-members-grid {
@@ -179,47 +187,47 @@
       margin-bottom: 8px;
     }
 
-    .group-member-card {
-      flex: 1;
-      min-height: 44px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 6px 8px;
-      background: #ffffff;
-      border-radius: 10px;
-      box-shadow: 0 3px 8px rgba(0,0,0,0.08);
-      font-size: 16px;
-    }
+   .group-member-card {
+  flex: 1;
+  min-height: 56px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.08);
+  font-size: 16px;
+}
 
-    .group-member-name {
-      font-size: 14px;
-      font-weight: 600;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      margin-right: 4px;
-    }
+.group-member-name {
+  font-size: 18px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-right: 4px;
+}
 
-    .group-member-controls {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
+.group-member-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
 
-    .group-member-controls .minus-btn,
-    .group-member-controls .plus-btn {
-      width: 24px;
-      height: 24px;
-      font-size: 14px;
-    }
+.group-member-controls .minus-btn,
+.group-member-controls .plus-btn {
+  width: 32px;
+  height: 32px;
+  font-size: 20px;
+}
 
-    .group-member-score {
-      width: 24px;
-      text-align: center;
-      font-size: 14px;
-      font-weight: 700;
-    }
+.group-member-score {
+  width: 32px;
+  text-align: center;
+  font-size: 18px;
+  font-weight: 800;
+}
 
     /* 分組排名＋危險區＋抽籤 三欄 */
     .row-lotteryDanger {
