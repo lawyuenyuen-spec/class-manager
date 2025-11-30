@@ -514,6 +514,120 @@
     <div id="cardHint" style="margin-top:8px; font-size:13px; color:#555;">
       步驟：請同學先揀一張神秘卡 → 顯示效果。
     </div>
+
+    
+  /* ================= 抽卡區（只顯示效果，不自動改分） ================= */
+
+// 可以按你喜好改卡牌內容
+const rewardCards = [
+  {
+    id: "all_plus1",
+    title: "全組每人 +1 分",
+    desc: "老師為該組每位同學的個人總分 +1（手動加）。"
+  },
+  {
+    id: "all_plus2",
+    title: "全組每人 +2 分",
+    desc: "老師為該組每位同學的個人總分 +2（手動加）。"
+  },
+  {
+    id: "choose_one_plus3",
+    title: "選一位同學 +3 分",
+    desc: "由老師或同學票選一位表現最積極的組員，加 3 分（手動）。"
+  },
+  {
+    id: "double_group_score",
+    title: "今日組分 x2",
+    desc: "老師可將該組今日小組分數 x2，再手動加到每位組員的個人分。"
+  },
+  {
+    id: "steal_two_points",
+    title: "向其他組偷 2 分",
+    desc: "老師可從另一組扣 2 分，再手動加 2 分到本組。"
+  },
+  {
+    id: "thanks_only",
+    title: "謝謝參與卡",
+    desc: "今次唔加分，但老師可以給予一句特別讚賞或祝福。"
+  }
+];
+
+// 抽卡用狀態
+let shuffledCards = [];
+let selectedCardIndex = null;
+let showAllCardTitles = false;
+
+// 洗牌（隨機排列卡牌）
+function shuffleCards() {
+  shuffledCards = [...rewardCards];
+  for (let i = shuffledCards.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffledCards[i], shuffledCards[j]] = [shuffledCards[j], shuffledCards[i]];
+  }
+}
+
+// 重新畫出卡牌
+function renderCards() {
+  const listEl = document.getElementById("cardList");
+  const hintEl = document.getElementById("cardHint");
+  if (!listEl) return;
+
+  listEl.innerHTML = "";
+
+  shuffledCards.forEach((card, index) => {
+    const btn = document.createElement("button");
+    btn.className = "reward-card";
+    btn.onclick = () => revealCard(index);
+
+    const isSelected = index === selectedCardIndex;
+    const showTitle = showAllCardTitles || isSelected;
+
+    if (!showTitle) {
+      // 未開：神秘卡
+      btn.classList.add("mystery");
+      btn.innerHTML = "❓ 神秘卡";
+    } else {
+      // 已開：顯示卡牌標題
+      btn.innerHTML = `<strong>${card.title}</strong>`;
+      if (isSelected) {
+        btn.classList.add("selected");
+      }
+    }
+
+    listEl.appendChild(btn);
+  });
+
+  if (hintEl) {
+    if (selectedCardIndex == null) {
+      hintEl.textContent = "步驟：請同學先揀一張神秘卡 → 顯示效果。";
+    } else {
+      const card = shuffledCards[selectedCardIndex];
+      hintEl.textContent =
+        `抽到：「${card.title}」— ${card.desc}（請老師自行用上面加分按鈕處理）`;
+    }
+  }
+}
+
+// 學生撳其中一張卡
+function revealCard(index) {
+  selectedCardIndex = index;     // 記住邊一張被揀
+  showAllCardTitles = false;     // 先只顯示呢一張
+  renderCards();
+}
+
+// 顯示所有卡牌效果（第二步）
+function showAllCards() {
+  showAllCardTitles = true;
+  renderCards();
+}
+
+// 重新洗牌（下一輪遊戲）
+function resetCards() {
+  selectedCardIndex = null;
+  showAllCardTitles = false;
+  shuffleCards();
+  renderCards();
+}
   </div>
   <!-- ⭐⭐ 抽卡區結束 ⭐⭐ -->
 
@@ -1126,119 +1240,6 @@
     }
     out.textContent = result.map(s => `${s.seat}. ${s.name}`).join("、");
   }
-
-  /* ================= 抽卡區（只顯示效果，不自動改分） ================= */
-
-// 可以按你喜好改卡牌內容
-const rewardCards = [
-  {
-    id: "all_plus1",
-    title: "全組每人 +1 分",
-    desc: "老師為該組每位同學的個人總分 +1（手動加）。"
-  },
-  {
-    id: "all_plus2",
-    title: "全組每人 +2 分",
-    desc: "老師為該組每位同學的個人總分 +2（手動加）。"
-  },
-  {
-    id: "choose_one_plus3",
-    title: "選一位同學 +3 分",
-    desc: "由老師或同學票選一位表現最積極的組員，加 3 分（手動）。"
-  },
-  {
-    id: "double_group_score",
-    title: "今日組分 x2",
-    desc: "老師可將該組今日小組分數 x2，再手動加到每位組員的個人分。"
-  },
-  {
-    id: "steal_two_points",
-    title: "向其他組偷 2 分",
-    desc: "老師可從另一組扣 2 分，再手動加 2 分到本組。"
-  },
-  {
-    id: "thanks_only",
-    title: "謝謝參與卡",
-    desc: "今次唔加分，但老師可以給予一句特別讚賞或祝福。"
-  }
-];
-
-// 抽卡用狀態
-let shuffledCards = [];
-let selectedCardIndex = null;
-let showAllCardTitles = false;
-
-// 洗牌（隨機排列卡牌）
-function shuffleCards() {
-  shuffledCards = [...rewardCards];
-  for (let i = shuffledCards.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [shuffledCards[i], shuffledCards[j]] = [shuffledCards[j], shuffledCards[i]];
-  }
-}
-
-// 重新畫出卡牌
-function renderCards() {
-  const listEl = document.getElementById("cardList");
-  const hintEl = document.getElementById("cardHint");
-  if (!listEl) return;
-
-  listEl.innerHTML = "";
-
-  shuffledCards.forEach((card, index) => {
-    const btn = document.createElement("button");
-    btn.className = "reward-card";
-    btn.onclick = () => revealCard(index);
-
-    const isSelected = index === selectedCardIndex;
-    const showTitle = showAllCardTitles || isSelected;
-
-    if (!showTitle) {
-      // 未開：神秘卡
-      btn.classList.add("mystery");
-      btn.innerHTML = "❓ 神秘卡";
-    } else {
-      // 已開：顯示卡牌標題
-      btn.innerHTML = `<strong>${card.title}</strong>`;
-      if (isSelected) {
-        btn.classList.add("selected");
-      }
-    }
-
-    listEl.appendChild(btn);
-  });
-
-  if (hintEl) {
-    if (selectedCardIndex == null) {
-      hintEl.textContent = "步驟：請同學先揀一張神秘卡 → 顯示效果。";
-    } else {
-      const card = shuffledCards[selectedCardIndex];
-      hintEl.textContent =
-        `抽到：「${card.title}」— ${card.desc}（請老師自行用上面加分按鈕處理）`;
-    }
-  }
-}
-
-// 學生撳其中一張卡
-function revealCard(index) {
-  selectedCardIndex = index;     // 記住邊一張被揀
-  showAllCardTitles = false;     // 先只顯示呢一張
-  renderCards();
-}
-
-// 顯示所有卡牌效果（第二步）
-function showAllCards() {
-  showAllCardTitles = true;
-  renderCards();
-}
-
-// 重新洗牌（下一輪遊戲）
-function resetCards() {
-  selectedCardIndex = null;
-  showAllCardTitles = false;
-  shuffleCards();
-  renderCards();
-}
   
   /* ================= 作業系統 ================= */
   function addHomework() {
