@@ -144,13 +144,8 @@
       cursor: pointer;
     }
 
-    .plus-btn {
-      background:#16a34a;
-    }
-
-    .minus-btn {
-      background:#dc2626;
-    }
+    .plus-btn { background:#16a34a; }
+    .minus-btn { background:#dc2626; }
 
     .edit-btn   { font-size: 20px; cursor: pointer; margin-right: 4px; }
     .delete-btn { font-size: 20px; cursor: pointer; color: #dc2626; }
@@ -264,7 +259,7 @@
     .modal {
       background: white;
       width: 95%;
-      max-width: 1100px;       /* 視窗大啲 */
+      max-width: 1100px;
       padding: 24px;
       border-radius: 18px;
       max-height: 88vh;
@@ -273,7 +268,7 @@
 
     .student-grid {
       display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr)); /* 卡片闊啲，兩欄 */
+      grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 12px;
       margin-top: 16px;
     }
@@ -309,20 +304,18 @@
     .circle-check {
       width: 24px;
       height: 24px;
-      border: 2px solid #9ca3af; /* 灰色邊 */
+      border: 2px solid #9ca3af;
       border-radius: 50%;
       cursor: pointer;
       flex-shrink:0;
       background: transparent;
     }
 
-    /* 藍色：今次打勾準備派分 */
     .circle-check.checked {
       background: #2563eb;
       border-color: #2563eb;
     }
 
-    /* 綠色：已派過準時交 +1 分 */
     .circle-check.awarded {
       background: #16a34a;
       border-color: #16a34a;
@@ -338,26 +331,10 @@
       white-space: nowrap;
     }
 
-    /* 作業狀態顏色 */
-    .status-btn.status-未繳交 {
-      background: #d1d5db;
-      color: #444;
-    }
-
-    .status-btn.status-已繳交 {
-      background: #3b82f6;
-      color: white;
-    }
-
-    .status-btn.status-待訂正 {
-      background: #f97316;
-      color: white;
-    }
-
-    .status-btn.status-已訂正 {
-      background: #16a34a;
-      color: white;
-    }
+    .status-btn.status-未繳交 { background: #d1d5db; color: #444; }
+    .status-btn.status-已繳交 { background: #3b82f6; color: white; }
+    .status-btn.status-待訂正 { background: #f97316; color: white; }
+    .status-btn.status-已訂正 { background: #16a34a; color: white; }
 
     .modal-footer {
       margin-top: 18px;
@@ -382,7 +359,8 @@
         flex: 1 1 100%;
       }
     }
-        /* 抽卡區：卡片排列 */
+
+    /* 抽卡區：卡片排列 */
     .reward-card-grid {
       display: flex;
       flex-wrap: wrap;
@@ -410,7 +388,7 @@
     }
 
     .reward-card.mystery {
-      background: #e0f2fe;        /* 淺藍神秘卡 */
+      background: #e0f2fe;
       border-style: dashed;
     }
 
@@ -498,142 +476,25 @@
         <div id="lotteryResult" style="margin-top:10px; font-size:16px; font-weight:600;"></div>
       </div>
     </div>
-  </div>
 
-  <!-- ⭐⭐ 抽卡區放在這裡（小組頁底部） ⭐⭐ -->
-  <div class="card" style="margin-top:16px;">
-    <h3>🎴 抽卡區</h3>
+    <!-- 🎴 抽卡區（只在小組頁顯示） -->
+    <div class="card" style="margin-top:16px;">
+      <h3>🎴 抽卡區</h3>
 
-    <div id="cardList" class="reward-card-grid"></div>
+      <div id="cardList" class="reward-card-grid"></div>
 
-    <div style="margin-top:10px; display:flex; gap:8px; justify-content:flex-end;">
-      <button class="btn-secondary" onclick="showAllCards()">👀 顯示所有卡</button>
-      <button class="btn-secondary" onclick="resetCards()">🔁 重新洗牌</button>
+      <div style="margin-top:10px; display:flex; gap:8px; justify-content:flex-end; flex-wrap:wrap;">
+        <button class="btn-secondary" onclick="showAllCards()">👀 顯示所有卡</button>
+        <button class="btn-secondary" onclick="resetCards()">🔁 重新洗牌</button>
+      </div>
+
+      <div id="cardHint" style="margin-top:8px; font-size:13px; color:#555;">
+        步驟：請同學先揀一張神秘卡 → 顯示效果。
+      </div>
     </div>
-
-    <div id="cardHint" style="margin-top:8px; font-size:13px; color:#555;">
-      步驟：請同學先揀一張神秘卡 → 顯示效果。
-    </div>
-
-    
-  /* ================= 抽卡區（只顯示效果，不自動改分） ================= */
-
-// 可以按你喜好改卡牌內容
-const rewardCards = [
-  {
-    id: "all_plus1",
-    title: "全組每人 +1 分",
-    desc: "老師為該組每位同學的個人總分 +1（手動加）。"
-  },
-  {
-    id: "all_plus2",
-    title: "全組每人 +2 分",
-    desc: "老師為該組每位同學的個人總分 +2（手動加）。"
-  },
-  {
-    id: "choose_one_plus3",
-    title: "選一位同學 +3 分",
-    desc: "由老師或同學票選一位表現最積極的組員，加 3 分（手動）。"
-  },
-  {
-    id: "double_group_score",
-    title: "今日組分 x2",
-    desc: "老師可將該組今日小組分數 x2，再手動加到每位組員的個人分。"
-  },
-  {
-    id: "steal_two_points",
-    title: "向其他組偷 2 分",
-    desc: "老師可從另一組扣 2 分，再手動加 2 分到本組。"
-  },
-  {
-    id: "thanks_only",
-    title: "謝謝參與卡",
-    desc: "今次唔加分，但老師可以給予一句特別讚賞或祝福。"
-  }
-];
-
-// 抽卡用狀態
-let shuffledCards = [];
-let selectedCardIndex = null;
-let showAllCardTitles = false;
-
-// 洗牌（隨機排列卡牌）
-function shuffleCards() {
-  shuffledCards = [...rewardCards];
-  for (let i = shuffledCards.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [shuffledCards[i], shuffledCards[j]] = [shuffledCards[j], shuffledCards[i]];
-  }
-}
-
-// 重新畫出卡牌
-function renderCards() {
-  const listEl = document.getElementById("cardList");
-  const hintEl = document.getElementById("cardHint");
-  if (!listEl) return;
-
-  listEl.innerHTML = "";
-
-  shuffledCards.forEach((card, index) => {
-    const btn = document.createElement("button");
-    btn.className = "reward-card";
-    btn.onclick = () => revealCard(index);
-
-    const isSelected = index === selectedCardIndex;
-    const showTitle = showAllCardTitles || isSelected;
-
-    if (!showTitle) {
-      // 未開：神秘卡
-      btn.classList.add("mystery");
-      btn.innerHTML = "❓ 神秘卡";
-    } else {
-      // 已開：顯示卡牌標題
-      btn.innerHTML = `<strong>${card.title}</strong>`;
-      if (isSelected) {
-        btn.classList.add("selected");
-      }
-    }
-
-    listEl.appendChild(btn);
-  });
-
-  if (hintEl) {
-    if (selectedCardIndex == null) {
-      hintEl.textContent = "步驟：請同學先揀一張神秘卡 → 顯示效果。";
-    } else {
-      const card = shuffledCards[selectedCardIndex];
-      hintEl.textContent =
-        `抽到：「${card.title}」— ${card.desc}（請老師自行用上面加分按鈕處理）`;
-    }
-  }
-}
-
-// 學生撳其中一張卡
-function revealCard(index) {
-  selectedCardIndex = index;     // 記住邊一張被揀
-  showAllCardTitles = false;     // 先只顯示呢一張
-  renderCards();
-}
-
-// 顯示所有卡牌效果（第二步）
-function showAllCards() {
-  showAllCardTitles = true;
-  renderCards();
-}
-
-// 重新洗牌（下一輪遊戲）
-function resetCards() {
-  selectedCardIndex = null;
-  showAllCardTitles = false;
-  shuffleCards();
-  renderCards();
-}
   </div>
-  <!-- ⭐⭐ 抽卡區結束 ⭐⭐ -->
+  <!-- 小組頁完 -->
 
-</div> <!-- page-group 結束 -->
-    
-  
   <!-- 作業訂正頁 -->
   <div id="page-homework" class="page">
     <h2>作業訂正</h2>
@@ -730,7 +591,6 @@ function resetCards() {
           console.log("☁️ 已由雲端覆蓋 state");
         }
       } else {
-        // 第一次登入，用現時 state 建立雲端
         await setDoc(ref, { state }, { merge: true });
         console.log("☁️ 雲端首次建立 state");
       }
@@ -752,7 +612,6 @@ function resetCards() {
 
   function saveState() {
     saveStateLocal();
-    // 非同步推上雲端（有登入先會做）
     saveStateToCloud();
   }
 
@@ -762,6 +621,7 @@ function resetCards() {
     renderGroupRanking();
     renderDangerZone();
     renderHomeworkList();
+    renderCards();   // 抽卡區都重畫一次
   }
 
   /* ================= Tabs ================= */
@@ -1240,7 +1100,106 @@ function resetCards() {
     }
     out.textContent = result.map(s => `${s.seat}. ${s.name}`).join("、");
   }
-  
+
+  /* ================= 抽卡區（只顯示效果，不自動改分） ================= */
+  const rewardCards = [
+    {
+      id: "all_plus1",
+      title: "全組每人 +1 分",
+      desc: "老師為該組每位同學的個人總分 +1（手動加）。"
+    },
+    {
+      id: "all_plus2",
+      title: "全組每人 +2 分",
+      desc: "老師為該組每位同學的個人總分 +2（手動加）。"
+    },
+    {
+      id: "choose_one_plus3",
+      title: "選一位同學 +3 分",
+      desc: "由老師或同學票選一位表現最積極的組員，加 3 分（手動）。"
+    },
+    {
+      id: "double_group_score",
+      title: "今日組分 x2",
+      desc: "老師可將該組今日小組分數 x2，再手動加到每位組員的個人分。"
+    },
+    {
+      id: "steal_two_points",
+      title: "向其他組偷 2 分",
+      desc: "老師可從另一組扣 2 分，再手動加 2 分到本組。"
+    },
+    {
+      id: "thanks_only",
+      title: "謝謝參與卡",
+      desc: "今次唔加分，但老師可以給予一句特別讚賞或祝福。"
+    }
+  ];
+
+  let shuffledCards = [];
+  let selectedCardIndex = null;
+  let showAllCardTitles = false;
+
+  function shuffleCards() {
+    shuffledCards = [...rewardCards];
+    for (let i = shuffledCards.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffledCards[i], shuffledCards[j]] = [shuffledCards[j], shuffledCards[i]];
+    }
+  }
+
+  function renderCards() {
+    const listEl = document.getElementById("cardList");
+    const hintEl = document.getElementById("cardHint");
+    if (!listEl || !hintEl) return;
+
+    listEl.innerHTML = "";
+
+    shuffledCards.forEach((card, index) => {
+      const btn = document.createElement("button");
+      btn.className = "reward-card";
+      btn.onclick = () => revealCard(index);
+
+      const isSelected = index === selectedCardIndex;
+      const showTitle = showAllCardTitles || isSelected;
+
+      if (!showTitle) {
+        btn.classList.add("mystery");
+        btn.innerHTML = "❓ 神秘卡";
+      } else {
+        btn.innerHTML = `<strong>${card.title}</strong>`;
+        if (isSelected) btn.classList.add("selected");
+      }
+
+      listEl.appendChild(btn);
+    });
+
+    if (selectedCardIndex == null) {
+      hintEl.textContent = "步驟：請同學先揀一張神秘卡 → 顯示效果。";
+    } else {
+      const card = shuffledCards[selectedCardIndex];
+      hintEl.textContent =
+        `抽到：「${card.title}」— ${card.desc}（請老師自行用上面加分按鈕處理）`;
+    }
+  }
+
+  function revealCard(index) {
+    selectedCardIndex = index;
+    showAllCardTitles = false;
+    renderCards();
+  }
+
+  function showAllCards() {
+    showAllCardTitles = true;
+    renderCards();
+  }
+
+  function resetCards() {
+    selectedCardIndex = null;
+    showAllCardTitles = false;
+    shuffleCards();
+    renderCards();
+  }
+
   /* ================= 作業系統 ================= */
   function addHomework() {
     const input = document.getElementById("newHomeworkTitle");
@@ -1254,7 +1213,7 @@ function resetCards() {
       id,
       title,
       status: {},
-      awarded: []  // 已經派過準時交 +1 的學生 id
+      awarded: []
     };
     state.students.forEach(s => {
       hw.status[s.id] = "未繳交";
@@ -1294,7 +1253,6 @@ function resetCards() {
     });
   }
 
-  /* Modal 相關 */
   let currentHW = null;
 
   function openHomework(id) {
@@ -1357,7 +1315,6 @@ function resetCards() {
 
     const circle = card.querySelector(".circle-check");
 
-    // 已派過 bonus → 不可再點
     if (currentHW.awarded.includes(sid)) return;
 
     circle.classList.toggle("checked");
@@ -1384,7 +1341,7 @@ function resetCards() {
     saveState();
     renderIndividual();
     renderHomeworkList();
-    openHomework(currentHW.id); // 重新開啟，已派分變綠圈圈
+    openHomework(currentHW.id);
   }
 
   function deleteHomework() {
@@ -1398,17 +1355,14 @@ function resetCards() {
   }
 
   /* ================= INIT ================= */
-    
   window.addEventListener("DOMContentLoaded", () => {
-  loadStateLocal(); 
-  initTabs();
-  initAuthUI();
-  rerenderAll();
+    loadStateLocal();
+    initTabs();
+    initAuthUI();
 
-  // ✅ 抽卡區初始化
-  shuffleCards();
-  renderCards();
-});
+    shuffleCards();   // 抽卡洗牌
+    rerenderAll();
+  });
 
   /* 把 function 掛到 window 方便 inline onclick 用 */
   window.addStudent = addStudent;
@@ -1424,6 +1378,7 @@ function resetCards() {
   window.renameGroup = renameGroup;
 
   window.drawLottery = drawLottery;
+
   window.showAllCards = showAllCards;
   window.resetCards   = resetCards;
 
